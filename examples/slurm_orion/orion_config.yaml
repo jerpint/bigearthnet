@@ -1,0 +1,16 @@
+experiment:
+  name:
+    my_exp
+  max_trials: 2
+  working_dir:
+    orion_working_dir
+  algorithms:
+    random:
+      seed: 1234
+evc:
+  non_monitored_arguments:
+    - output
+    - data
+    - tmp-folder
+  ignore_code_changes:
+    true

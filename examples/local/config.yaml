@@ -1,0 +1,14 @@
+# general
+batch_size: 32
+optimizer: adam
+loss: L1
+patience: 5
+architecture: my_model
+max_epoch: 99
+exp_name: my_exp_1
+# set to null to avoid setting a seed (can speed up GPU computation, but
+# results will not be reproducible)
+seed: 1234
+
+# architecture
+size: 10
