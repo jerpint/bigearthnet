@@ -54,9 +54,7 @@ def generate_debug_splits(splits_dir, num_debug_samples, seed):
         split_fname = os.path.join(splits_dir, split)
         debug_fname = os.path.join(debug_splits_dir, split)
 
-        split_sample = sample_from_csv(
-            split_fname, num_samples=num_samples, seed=seed
-        )
+        split_sample = sample_from_csv(split_fname, num_samples=num_samples, seed=seed)
         split_sample.to_csv(debug_fname, index=False, header=False)
 
 
@@ -67,34 +65,48 @@ def generate_debug_dataset(splits_dir, dataset_root_dir, output_dir, tar):
         os.mkdir(output_dir)
 
     debug_splits_dir = os.path.join(splits_dir, "debug/")
-    assert os.path.isdir(debug_splits_dir), "Ensure you generated the debug splits first"
+    assert os.path.isdir(
+        debug_splits_dir
+    ), "Ensure you generated the debug splits first"
     for split in SPLIT_FILES:
         split_fname = os.path.join(debug_splits_dir, split)
         assert os.path.exists(split_fname), f"{split_fname} not found."
 
-        folders = pd.read_csv(split_fname, header=None)[0].to_list()  # Each row in the csv is a folder name
+        folders = pd.read_csv(split_fname, header=None)[
+            0
+        ].to_list()  # Each row in the csv is a folder name
         for folder in folders:
             src = os.path.join(dataset_root_dir, folder)
             dst = os.path.join(output_dir, folder)
             copytree(src, dst, dirs_exist_ok=True)
 
     if tar:
-        subprocess.run(["tar", "zcvf", "BigEarthNet-v1.0-Debug.tar", output_dir], check=True)
+        subprocess.run(
+            ["tar", "zcvf", "BigEarthNet-v1.0-Debug.tar", output_dir], check=True
+        )
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--splits-dir", help="Directory to download origional splits to.")
+    parser.add_argument(
+        "--splits-dir", help="Directory to download origional splits to."
+    )
     parser.add_argument("--output-dir", help="Directory to save the debug dataset to.")
-    parser.add_argument("--dataset-root-dir", help="Root directory of original extracted dataset.")
-    parser.add_argument("--tar", help="Save the debug dataset to an archive", action="store_true")
+    parser.add_argument(
+        "--dataset-root-dir", help="Root directory of original extracted dataset."
+    )
+    parser.add_argument(
+        "--tar", help="Save the debug dataset to an archive", action="store_true"
+    )
     parser.add_argument(
         "--num-debug-samples",
         help="Number of samples to use for [train, valid, test], e.g. 80, 10, 10",
         nargs=3,
         default=[80, 10, 10],
     )
-    parser.add_argument("--seed", help="Seed to use for reproducibility", type="int", default=42)
+    parser.add_argument(
+        "--seed", help="Seed to use for reproducibility", type="int", default=42
+    )
 
     args = parser.parse_args()
     splits_dir = args.splits_dir
@@ -117,5 +129,5 @@ if __name__ == "__main__":
         splits_dir=splits_dir,
         dataset_root_dir=dataset_root_dir,
         output_dir=output_dir,
-        tar=True
+        tar=True,
     )
