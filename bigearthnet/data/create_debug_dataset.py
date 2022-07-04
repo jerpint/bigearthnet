@@ -20,8 +20,8 @@ import pandas as pd
 
 SEED = 42
 BASE_URL = "https://git.tu-berlin.de/rsim/BigEarthNet-S2_43-classes_models/-/raw/master/splits/"
-num_debug_samples = [100, 10, 10]
-splits = ["train.csv", "val.csv", "test.csv"]
+SPLIT_FILES = ["train.csv", "val.csv", "test.csv"]
+num_debug_samples = [160, 20, 20]  # train, val, test
 
 
 def download_from_url(url: str, dst: str):
@@ -29,43 +29,48 @@ def download_from_url(url: str, dst: str):
     subprocess.run(["curl", url, "-o", dst], check=True)
 
 
-def download_splits(splits_dir: str, splits):
+def sample_from_csv(csv, num_samples, seed=None):
+    """Randomly sample num_samples rows from a csv."""
+    return pd.read_csv(csv, header=None).sample(num_samples, random_state=seed)
+
+
+def download_splits(splits_dir: str):
     """Download the splits from the original repo."""
     if not os.path.isdir(splits_dir):
         os.mkdir(splits_dir)
 
-    for split in splits:
+    for split in SPLIT_FILES:
         url = BASE_URL + split
         dst = str(os.path.join(splits_dir, split))
         if not os.path.exists(dst):
             download_from_url(url, dst)
 
 
-def generate_debug_split(split_fname, debug_fname, num_samples, seed=None):
-    """Returns n_samples from a split."""
-    debug_df = pd.read_csv(split_fname, header=None).sample(num_samples, random_state=seed)
-    debug_df.to_csv(debug_fname, index=False, header=False)
-
-
-def generate_debug_splits(splits_dir, debug_splits_dir, splits, num_debug_samples, seed):
+def generate_debug_splits(splits_dir, num_debug_samples, seed):
+    """Generates debug splits (train.csv, val.csv, test.csv) by randomly sampling the original split files."""
+    debug_splits_dir = os.path.join(splits_dir, "debug/")
     if not os.path.isdir(debug_splits_dir):
         os.mkdir(debug_splits_dir)
 
-    for split, num_samples in zip(splits, num_debug_samples):
+    for split, num_samples in zip(SPLIT_FILES, num_debug_samples):
         split_fname = os.path.join(splits_dir, split)
         debug_fname = os.path.join(debug_splits_dir, split)
 
-        generate_debug_split(
-            split_fname, debug_fname, num_samples=num_samples, seed=seed
+        split_sample = sample_from_csv(
+            split_fname, num_samples=num_samples, seed=seed
         )
+        split_sample.to_csv(debug_fname, index=False, header=False)
 
 
-def generate_debug_dataset(debug_splits_dir, splits, dataset_root_dir, output_dir, tar):
+def generate_debug_dataset(splits_dir, dataset_root_dir, output_dir, tar):
+    """Creates a new dataset comprised only of the samples referenced in the debug splits."""
     print("Generating debug dataset...")
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
 
-    for split in splits:
+    debug_splits_dir = os.path.join(splits_dir, "debug/")
+    assert os.path.isdir(debug_splits_dir), "Ensure you generated the debug splits first"
+    for split in SPLIT_FILES:
         split_fname = os.path.join(debug_splits_dir, split)
         assert os.path.exists(split_fname), f"{split_fname} not found."
 
@@ -76,7 +81,8 @@ def generate_debug_dataset(debug_splits_dir, splits, dataset_root_dir, output_di
             copytree(src, dst, dirs_exist_ok=True)
 
     if tar:
-        subprocess.run(["tar", "zcvf", "BigEarthNet-v1.0-DEBUG.tar", str(output_dir)], check=True)
+        subprocess.run(["tar", "zcvf", "BigEarthNet-v1.0-DEBUG.tar", output_dir], check=True)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -87,26 +93,21 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     splits_dir = args.splits_dir
-    debug_splits_dir = os.path.join(splits_dir, "debug/")
     output_dir = args.output_dir
     dataset_root_dir = args.dataset_root_dir
 
     download_splits(
         splits_dir=splits_dir,
-        splits=splits
     )
 
     generate_debug_splits(
         splits_dir=splits_dir,
-        debug_splits_dir=debug_splits_dir,
-        splits=splits,
         num_debug_samples=num_debug_samples,
         seed=SEED,
     )
 
     generate_debug_dataset(
-        debug_splits_dir=debug_splits_dir,
-        splits=splits,
+        splits_dir=splits_dir,
         dataset_root_dir=dataset_root_dir,
         output_dir=output_dir,
         tar=True
