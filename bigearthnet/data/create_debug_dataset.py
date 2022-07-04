@@ -39,8 +39,8 @@ def download_splits(splits_dir: str):
         os.mkdir(splits_dir)
 
     for split in SPLITS:
-        url = BASE_URL + split + '.csv'
-        dst = str(os.path.join(splits_dir, split + '.csv'))
+        url = BASE_URL + split + ".csv"
+        dst = str(os.path.join(splits_dir, split + ".csv"))
         if not os.path.exists(dst):
             print(f"Downloading {split}.csv to {os.path.abspath(splits_dir)}\n")
             download_from_url(url, dst)
@@ -57,8 +57,8 @@ def generate_debug_splits(splits_dir, output_dir, split_samples, seed):
 
     for split, num_samples in zip(SPLITS, split_samples):
         print(f"Sampling {num_samples} samples for {split}")
-        split_fname = os.path.join(splits_dir, split + '.csv')
-        debug_fname = os.path.join(debug_splits_dir, split + '.csv')
+        split_fname = os.path.join(splits_dir, split + ".csv")
+        debug_fname = os.path.join(debug_splits_dir, split + ".csv")
 
         sampled_split = sample_from_csv(split_fname, num_samples=num_samples, seed=seed)
         sampled_split.to_csv(debug_fname, index=False, header=False)
@@ -74,7 +74,7 @@ def generate_debug_dataset(dataset_root_dir, output_dir):
 
     for split in SPLITS:
         print(f"copying debug {split} folders...")
-        split_fname = os.path.join(debug_splits_dir, split + '.csv')
+        split_fname = os.path.join(debug_splits_dir, split + ".csv")
         split_df = pd.read_csv(split_fname, header=None)
         folders = split_df[0].to_list()  # Each row in the csv is a folder name
         for folder in tqdm(folders):
@@ -86,10 +86,9 @@ def generate_debug_dataset(dataset_root_dir, output_dir):
     # Compress the dataset to a tar archive
     print("Compressing the debug dataset...")
     tar_fname = "BigEarthNet-v1.0-Debug.tar"
-    subprocess.run(
-        ["tar", "zcf", tar_fname, output_dir], check=True
-    )
+    subprocess.run(["tar", "zcf", tar_fname, output_dir], check=True)
     print(f"Debug dataset saved to {os.path.abspath(tar_fname)}")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -110,10 +109,7 @@ if __name__ == "__main__":
         type=int,
     )
     parser.add_argument(
-        "--seed",
-        help="Seed to use for reproducibility",
-        type=int,
-        default=42
+        "--seed", help="Seed to use for reproducibility", type=int, default=42
     )
 
     args = parser.parse_args()
