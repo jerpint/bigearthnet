@@ -18,10 +18,8 @@ from shutil import copytree
 
 import pandas as pd
 
-SEED = 42
 BASE_URL = "https://git.tu-berlin.de/rsim/BigEarthNet-S2_43-classes_models/-/raw/master/splits/"
 SPLIT_FILES = ["train.csv", "val.csv", "test.csv"]
-num_debug_samples = [160, 20, 20]  # train, val, test
 
 
 def download_from_url(url: str, dst: str):
@@ -81,7 +79,7 @@ def generate_debug_dataset(splits_dir, dataset_root_dir, output_dir, tar):
             copytree(src, dst, dirs_exist_ok=True)
 
     if tar:
-        subprocess.run(["tar", "zcvf", "BigEarthNet-v1.0-DEBUG.tar", output_dir], check=True)
+        subprocess.run(["tar", "zcvf", "BigEarthNet-v1.0-Debug.tar", output_dir], check=True)
 
 
 if __name__ == "__main__":
@@ -90,11 +88,20 @@ if __name__ == "__main__":
     parser.add_argument("--output-dir", help="Directory to save the debug dataset to.")
     parser.add_argument("--dataset-root-dir", help="Root directory of original extracted dataset.")
     parser.add_argument("--tar", help="Save the debug dataset to an archive", action="store_true")
-    args = parser.parse_args()
+    parser.add_argument(
+        "--num-debug-samples",
+        help="Number of samples to use for [train, valid, test], e.g. 80, 10, 10",
+        nargs=3,
+        default=[80, 10, 10],
+    )
+    parser.add_argument("--seed", help="Seed to use for reproducibility", type="int", default=42)
 
+    args = parser.parse_args()
     splits_dir = args.splits_dir
     output_dir = args.output_dir
     dataset_root_dir = args.dataset_root_dir
+    num_debug_samples = args.num_debug_samples
+    seed = args.seed
 
     download_splits(
         splits_dir=splits_dir,
@@ -103,7 +110,7 @@ if __name__ == "__main__":
     generate_debug_splits(
         splits_dir=splits_dir,
         num_debug_samples=num_debug_samples,
-        seed=SEED,
+        seed=seed,
     )
 
     generate_debug_dataset(
