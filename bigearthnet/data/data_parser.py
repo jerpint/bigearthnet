@@ -8,10 +8,12 @@ import pathlib
 import pickle
 import pprint
 import re
+import os
 import typing
 
 import cv2 as cv
 import hub
+import pandas as pd
 import numpy as np
 import tqdm
 
@@ -34,7 +36,7 @@ sentinel2_band_map = {
 }
 """Sentinel-2 Level 2A target band string mappings for ease-of-use while loading the dataset."""
 
-bigearthnet_patch_name_pattern = re.compile(r"^([\w\d]+)_MSIL2A_(\d{8}T\d{6})_(\d+)_(\d+)$")
+bigearthnet_patch_name_pattern = re.compile(r"^([\w\d]+)_MSIL2A_(\d{8}T(\d+))_(\d+)_(\d+)$")
 """BigEarthNet(-S2) dataset patch folder name pattern.
 
 The first group indicates the Sentinel-2 mission ID that can be either S2A or S2B, the second
@@ -55,6 +57,8 @@ bigearthnet_metadata_field_names = [
 class BigEarthNetPatch:
     """Defines the (meta)data of a single patch inside the BigEarthNet(-S2) dataset."""
 
+    patch_folder: str
+    """Parent folder containing the patch info from BigEarthNet (-S2) dataset."""
     mission_id: str
     """Sentinel-2 mission identifier; should be S2A or S2B."""
     coordinates: typing.Dict[str, float]
@@ -158,22 +162,16 @@ class HubCompactor:
     def __init__(
         self,
         root: typing.Union[typing.AnyStr, pathlib.Path],
+        split_file: str,
     ):
         """Parses the raw dataset to validate its metadata and prepare it for exportation."""
         root = pathlib.Path(root).absolute()
+        split_file = pathlib.Path(split_file).absolute()
         assert root.is_dir(), f"invalid big earth net root directory path ({root})"
-        metadata_cache_path = root / "patches_metadata.pkl"
-        if metadata_cache_path.exists():
-            assert metadata_cache_path.is_file()
-            logger.info(f"loading patch metadata from cache: {metadata_cache_path}")
-            with open(metadata_cache_path, "rb") as fd:
-                self.patches = pickle.load(fd)
-        else:
-            logger.info(f"loading patch metadata from directory: {root}")
-            self.patches = self._load_patch_metadata(root)
-            assert len(self.patches) > 0
-            with open(metadata_cache_path, "wb") as fd:
-                pickle.dump(self.patches, fd)
+        logger.info(f"loading patch metadata from directory: {root}")
+        self.patches = self._load_patch_metadata(root, split_file)
+        print(self.patches)
+        assert len(self.patches) > 0
         tot_samples = len(self.patches)
         logger.info(f"loaded metadata for {tot_samples} patches")
         self.class_map = self._compute_class_map(self.patches)
@@ -186,16 +184,18 @@ class HubCompactor:
     @staticmethod
     def _load_patch_metadata(
         root: pathlib.Path,
+        split_file: pathlib.Path,
         show_progress_bar: bool = True,
     ) -> typing.List[BigEarthNetPatch]:
         assert root.is_dir(), f"invalid big earth net root directory path ({root})"
         patches = []
-        patch_folders = list(root.iterdir())
+        patch_folders = pd.read_csv(split_file, header=None)[0].to_list()  # Each row in the csv is a folder name
+        patch_folders = [pathlib.Path(os.path.join(root / "data", f)) for f in patch_folders]
         if show_progress_bar:
-            patch_folders = tqdm.tqdm(patch_folders, patch_folders, desc="scanning patch folders")
+            patch_folders = tqdm.tqdm(patch_folders, desc="scanning patch folders")
         for patch_folder in patch_folders:
             match_res = re.match(bigearthnet_patch_name_pattern, patch_folder.name)
-            if match_res and patch_folder.is_dir():
+            if patch_folder.is_dir():
                 band_files_map = {
                     band_name: patch_folder / (patch_folder.name + f"_{band_name}.tif")
                     for band_name in sentinel2_band_names
@@ -211,12 +211,7 @@ class HubCompactor:
                 patch_metadata["coordinates"] = {  # convert all coords to float right away
                     k: float(v) for k, v in patch_metadata["coordinates"].items()
                 }
-                acquisition_timestamp = datetime.datetime.strptime(
-                    patch_metadata["acquisition_date"],
-                    "%Y-%m-%d %H:%M:%S",
-                )
-                file_timestamp = datetime.datetime.strptime(match_res.group(2), "%Y%m%dT%H%M%S")
-                assert acquisition_timestamp == file_timestamp
+                patch_metadata["patch_folder"] = patch_folder.name
                 patches.append(BigEarthNetPatch(
                     mission_id=match_res.group(1),
                     tile_col=int(match_res.group(3)),
@@ -298,14 +293,24 @@ class HubCompactor:
                 except Exception as e:
                     print(f"patch_class_idxs = {patch_class_idxs}")
                     print("wtf")
-        logger.info(f"Dataset exportation complete: {str(output_path)}")
+        logger.info(f"Dataset export complete: {str(output_path)}")
 
 
 if __name__ == "__main__":
     logging.basicConfig()
     logging.getLogger().setLevel(logging.NOTSET)
-    root_path = pathlib.Path("/wdata/datasets/bigearthnet-mini/orig")
-    output_hub_path = pathlib.Path("/wdata/datasets/bigearthnet-mini/.hub_dataset/")
-    dataset = HubCompactor(root_path)
-    dataset.export(output_hub_path)
+    root_path = pathlib.Path("./debug_dataset/")
+    output_hub_path = pathlib.Path("./debug_dataset/bigearthnet-mini/.hub_dataset/")
+    train_dataset = HubCompactor(root_path, split_file="./debug_dataset/splits/train.csv")
+    train_dataset.export(
+        os.path.join(output_hub_path, 'train'),
+    )
+    val_dataset = HubCompactor(root_path, split_file='./debug_dataset/splits/val.csv')
+    val_dataset.export(
+        os.path.join(output_hub_path, 'val'),
+    )
+    test_dataset = HubCompactor(root_path, split_file='./debug_dataset/splits/test.csv')
+    test_dataset.export(
+        os.path.join(output_hub_path, 'test'),
+    )
     print("all done")
