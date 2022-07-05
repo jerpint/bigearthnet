@@ -88,26 +88,7 @@ def main():
     else:
         hyper_params = {}
 
-    # to be done as soon as possible otherwise mlflow will not log with the proper exp. name
-    if orion.client.cli.IS_ORION_ON:
-        exp_name = os.getenv('ORION_EXPERIMENT_NAME', 'orion_exp')
-        tags = {'mlflow.runName': os.getenv('ORION_TRIAL_ID')}
-    else:
-        exp_name = hyper_params.get('exp_name', 'exp')
-        tags = {}
-    mlflow.set_experiment(exp_name)
-    save_dir = os.getenv('MLFLOW_TRACKING_URI', './mlruns')
-    mlf_logger = MLFlowLogger(
-        experiment_name=exp_name,
-        tags=tags,
-        save_dir=save_dir
-    )
-
-    if os.path.exists(os.path.join(args.output, STAT_FILE_NAME)):
-        mlf_logger._run_id = load_mlflow(args.output)
-
-    mlflow.start_run(run_id=mlf_logger.run_id)
-    run(args, data_dir, output_dir, hyper_params, mlf_logger)
+    run(args, data_dir, output_dir, hyper_params)
     mlflow.end_run()
 
     if args.tmp_folder is not None:

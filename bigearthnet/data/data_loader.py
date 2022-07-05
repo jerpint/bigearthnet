@@ -97,7 +97,6 @@ class DataModule(pl.LightningDataModule):
         dataset_path: typing.Union[typing.AnyStr, pathlib.Path],
         batch_size: int,
         num_workers: int = 0,
-        split_seed: int = 0,
         **extra_hub_kwargs,
     ):
         """Validates the hyperparameter config dictionary and sets up internal attributes."""
@@ -105,7 +104,6 @@ class DataModule(pl.LightningDataModule):
         self.dataset_path = dataset_path
         self.batch_size = batch_size
         self.num_workers = num_workers
-        self.split_seed = split_seed
         self._extra_hub_kwargs = extra_hub_kwargs
         self.train_parser, self.valid_parser, self.test_parser = None, None, None
 
@@ -156,13 +154,20 @@ class DataModule(pl.LightningDataModule):
         )
 
 
+def load_datamodule(hub_path, **kwargs):
+    data_module = DataModule(dataset_path=hub_path, **kwargs)
+    data_module.setup()
+    return data_module
+
+
 if __name__ == "__main__":
     logging.basicConfig()
     logging.getLogger().setLevel(logging.NOTSET)
+
     hub_dataset_path = pathlib.Path("./debug_dataset/hub_dataset/")
-    data_module = DataModule(dataset_path=hub_dataset_path, batch_size=16)
-    data_module.setup()
-    train_data_loader = data_module.train_dataloader()
+    dm = load_datamodule(hub_dataset_path, batch_size=16)
+
+    train_data_loader = dm.train_dataloader()
     assert len(train_data_loader) > 0
     minibatch = next(iter(train_data_loader))
     assert "data" in minibatch and len(minibatch["data"]) <= 16

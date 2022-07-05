@@ -1,22 +1,38 @@
 import pathlib
-
-import torch
 import pytorch_lightning as pl
+from pytorch_lightning.callbacks import ModelCheckpoint
 
-from bigearthnet.data.data_loader import DataModule
-from bigearthnet.models.my_model import SimpleModel
+from bigearthnet.data.data_loader import load_datamodule
+from bigearthnet.models.model_loader import load_model
 
+def load_callbacks():
+    callbacks = []
 
+    last_model_checkpoint = ModelCheckpoint(
+        save_top_k=1,
+        monitor="step",
+        mode="max",
+        filename="last-model",
+    )
+    callbacks.append(last_model_checkpoint)
 
-# load datamodules
+    best_model_checkpoint = ModelCheckpoint(
+        save_top_k=1,
+        monitor="val_loss",
+        mode='min',
+        filename="best-model-{epoch:02d}-{val_loss:.2f}",
+    )
+    callbacks.append(best_model_checkpoint)
+
+    return callbacks
+
+# initialize the model + datamodules
 hub_dataset_path = pathlib.Path("./data/debug_dataset/hub_dataset/")
-dm = DataModule(dataset_path=hub_dataset_path, batch_size=16)
-dm.setup()
-
-
-# initialize the model
-model = SimpleModel(num_classes=43)
+datamodule = load_datamodule(hub_path=hub_dataset_path, batch_size=16)
+model = load_model(architecture="SimpleModel", num_classes=43)
+callbacks = load_callbacks()
 
 # do the training
-trainer = pl.Trainer(max_epochs=5) # gpus=4, num_nodes=8, precision=16, limit_train_batches=0.5)
-trainer.fit(model, datamodule=dm)
+trainer = pl.Trainer(max_epochs=5)  # gpus=4, num_nodes=8, precision=16, limit_train_batches=0.5)
+trainer = pl.Trainer(max_epochs=5, callbacks=callbacks)
+trainer.fit(model, datamodule=datamodule)
