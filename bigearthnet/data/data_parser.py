@@ -163,6 +163,7 @@ class HubCompactor:
         self,
         root: typing.Union[typing.AnyStr, pathlib.Path],
         split_file: str,
+        classes: typing.List[str],
     ):
         """Parses the raw dataset to validate its metadata and prepare it for exportation."""
         root = pathlib.Path(root).absolute()
@@ -170,15 +171,15 @@ class HubCompactor:
         assert root.is_dir(), f"invalid big earth net root directory path ({root})"
         logger.info(f"loading patch metadata from directory: {root}")
         self.patches = self._load_patch_metadata(root, split_file)
-        print(self.patches)
         assert len(self.patches) > 0
         tot_samples = len(self.patches)
         logger.info(f"loaded metadata for {tot_samples} patches")
-        self.class_map = self._compute_class_map(self.patches)
-        self.classes = sorted(list(self.class_map.keys()))
+        #  self.class_map = class_map # self._compute_class_map(self.patches)
+        self.classes = classes # sorted(list(self.class_map.keys()))
+        self.class_dist = self._compute_class_dist(self.patches)
         self.class2idx = {class_:idx for idx, class_ in enumerate(self.classes)}
         self.idx2class = {idx:class_ for idx, class_ in enumerate(self.classes)}
-        self.class_weights = {cname: len(cidxs) / tot_samples for cname, cidxs in self.class_map.items()}
+        self.class_weights = {cname: len(cidxs) / tot_samples for cname, cidxs in self.class_dist.items()}
         logger.debug(f"class weights:\n{pprint.PrettyPrinter(indent=2).pformat(self.class_weights)}")
 
     @staticmethod
@@ -222,21 +223,21 @@ class HubCompactor:
         return patches
 
     @staticmethod
-    def _compute_class_map(patches: typing.List[BigEarthNetPatch]):
+    def _compute_class_dist(patches: typing.List[BigEarthNetPatch]):
         assert len(patches) > 0
-        class_map = {}
+        class_dist = {}
         for idx, patch in enumerate(patches):
             for class_name in patch.labels:
-                if class_name not in class_map:
-                    class_map[class_name] = []
-                class_map[class_name].append(idx)
-        return class_map
+                if class_name not in class_dist:
+                    class_dist[class_name] = []
+                class_dist[class_name].append(idx)
+        return class_dist
 
     def export(
         self,
         output_path: typing.Union[typing.AnyStr, pathlib.Path],
         target_edge_size: int = 120,
-        target_bands: typing.Union[str, typing.List[str]] = "BGRNIR",
+        target_bands: typing.Union[str, typing.List[str]] = "BGR",
         target_dtype: np.dtype = np.dtype(np.uint16),
         norm_meanstddev: typing.Optional[typing.Tuple[int, int]] = None,
         image_compression: str = "lz4",
@@ -252,7 +253,7 @@ class HubCompactor:
         the dataset creation.
         """
         assert pathlib.Path(output_path).suffix == "", "path suffix should be empty (it's a dir!)"
-        dataset = hub.empty(str(output_path), overwrite=False, **extra_hub_kwargs)
+        dataset = hub.empty(str(output_path), overwrite=True, **extra_hub_kwargs)
         with dataset:
             # first, export dataset-level metadata using the info attribute...
             dataset.info.update(
@@ -265,13 +266,13 @@ class HubCompactor:
             )
             # next, create the tensor fields we'll be filling with our patch data (data + labels)
             dataset.create_tensor(
-                name="patches/data",
+                name="data",
                 htype="image",
                 dtype=target_dtype,
                 sample_compression=image_compression,
             )
             dataset.create_tensor(
-                name="patches/labels",
+                name="labels",
                 htype="sequence[class_label]",
                 class_names=self.classes,
             )
@@ -286,13 +287,12 @@ class HubCompactor:
                     target_dtype=target_dtype,
                     norm_meanstddev=norm_meanstddev,
                 )
-                dataset["patches/data"].append(patch_data)
+                dataset["data"].append(patch_data)
                 patch_class_idxs = [self.class2idx[class_name] for class_name in patch.labels]
                 try:
-                    dataset["patches/labels"].append(patch_class_idxs)
+                    dataset["labels"].append(patch_class_idxs)
                 except Exception as e:
                     print(f"patch_class_idxs = {patch_class_idxs}")
-                    print("wtf")
         logger.info(f"Dataset export complete: {str(output_path)}")
 
 
@@ -300,17 +300,19 @@ if __name__ == "__main__":
     logging.basicConfig()
     logging.getLogger().setLevel(logging.NOTSET)
     root_path = pathlib.Path("./debug_dataset/")
-    output_hub_path = pathlib.Path("./debug_dataset/bigearthnet-mini/.hub_dataset/")
-    train_dataset = HubCompactor(root_path, split_file="./debug_dataset/splits/train.csv")
-    train_dataset.export(
-        os.path.join(output_hub_path, 'train'),
-    )
-    val_dataset = HubCompactor(root_path, split_file='./debug_dataset/splits/val.csv')
-    val_dataset.export(
-        os.path.join(output_hub_path, 'val'),
-    )
-    test_dataset = HubCompactor(root_path, split_file='./debug_dataset/splits/test.csv')
-    test_dataset.export(
-        os.path.join(output_hub_path, 'test'),
-    )
+    output_hub_path = pathlib.Path("./debug_dataset/hub_dataset/")
+    splits_path = pathlib.Path("./debug_dataset/splits/")
+
+    with open("class_list.json", 'r') as f:
+        classes = json.load(f)
+
+    for split in ["train", "val", "test"]:
+        dataset = HubCompactor(
+            root_path,
+            split_file=os.path.join(splits_path, split + ".csv"),
+            classes=classes,
+        )
+        dataset.export(
+            os.path.join(output_hub_path, split),
+        )
     print("all done")
