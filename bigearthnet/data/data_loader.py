@@ -30,20 +30,21 @@ class HubParser(torch.utils.data.dataset.Dataset):
         """Returns the total size (patch count) of the dataset."""
         return len(self.dataset)
 
-    def __getitem__(self, item: int) -> typing.Dict[str, typing.Any]:
+    def __getitem__(self, idx: int) -> typing.Dict[str, typing.Any]:
         """Returns a single data sample loaded from the dataset.
 
         For BigEarthNet, the data sample simply consists of the patch data and its labels. The
         patch data and labels will be converted from their original types to float32 and int16,
         respectively, in order to make sure that PyTorch will be able to batch them.
+        Labels are converted to one-hot representation.
         """
-        data = self.dataset[int(item)]  # cast in case we're using numpy ints or something similar
-        assert tuple(self.tensor_names) == ("patches/data", "patches/labels")
-        class_labels = np.zeros((len(self.class_names), ), dtype=np.int16)
-        class_labels[data["patches/labels"].numpy()] = 1
+        item = self.dataset[int(idx)]  # cast in case we're using numpy ints or something similar
+        assert tuple(self.tensor_names) == ("data", "labels")
+        onehot_labels = np.zeros((len(self.class_names), ), dtype=np.int16)
+        onehot_labels[item["labels"].numpy()] = 1
         return {
-            "patches/data": data["patches/data"].numpy().astype(np.float32),
-            "patches/labels": class_labels,
+            "data": item["data"].numpy().astype(np.float32),
+            "labels": onehot_labels,
         }
 
     def summary(self) -> None:
@@ -105,43 +106,24 @@ class DataModule(pl.LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.split_seed = split_seed
-        self._data_parser = None
         self._extra_hub_kwargs = extra_hub_kwargs
         self.train_parser, self.valid_parser, self.test_parser = None, None, None
 
     def prepare_data(self):
-        """Downloads/extracts/unpacks the data if needed (we don't)."""
+        """Downloads/extracts/unpacks the data if needed."""
         pass
 
-    def _get_80_10_10_split_indices(self, dataset_size: int) -> typing.Tuple:
-        """Returns the sample indices for a 80-10-10 (train/valid/test) split."""
-        rng = np.random.default_rng(self.split_seed)
-        shuffled_idxs = rng.permutation(dataset_size)
-        eval_set_size = int(0.2 * dataset_size)
-        valid_set_size = eval_set_size // 2
-        train_set_size = dataset_size - eval_set_size
-        return (
-            shuffled_idxs[0:train_set_size],
-            shuffled_idxs[train_set_size:(train_set_size + valid_set_size)],
-            shuffled_idxs[(train_set_size + valid_set_size):],
-        )
 
     def setup(self, stage=None) -> None:
         """Parses and splits all samples across the train/valid/test parsers."""
-        if self._data_parser is None:
-            self._data_parser = HubParser(self.dataset_path, **self._extra_hub_kwargs)
-        train_idxs, valid_idxs, test_idxs = self._get_80_10_10_split_indices(len(self._data_parser))
-        assert len(np.intersect1d(train_idxs, valid_idxs)) == 0
-        assert len(np.intersect1d(train_idxs, test_idxs)) == 0
-        assert len(np.intersect1d(valid_idxs, test_idxs)) == 0
         if stage == "fit" or stage is None:
             if self.train_parser is None:
-                self.train_parser = torch.utils.data.dataset.Subset(self._data_parser, train_idxs)
+                self.train_parser = HubParser(self.dataset_path / "train", **self._extra_hub_kwargs)
             if self.valid_parser is None:
-                self.valid_parser = torch.utils.data.dataset.Subset(self._data_parser, valid_idxs)
+                self.valid_parser = HubParser(self.dataset_path / "val", **self._extra_hub_kwargs)
         if stage == "test" or stage is None:
             if self.test_parser is None:
-                self.test_parser = torch.utils.data.dataset.Subset(self._data_parser, test_idxs)
+                self.valid_parser = HubParser(self.dataset_path / "test", **self._extra_hub_kwargs)
 
     def train_dataloader(self) -> torch.utils.data.dataloader.DataLoader:
         """Creates the training dataloader using the training data parser."""
@@ -177,12 +159,13 @@ class DataModule(pl.LightningDataModule):
 if __name__ == "__main__":
     logging.basicConfig()
     logging.getLogger().setLevel(logging.NOTSET)
-    hub_dataset_path = pathlib.Path("/wdata/datasets/bigearthnet-mini/.hub_dataset/")
+    hub_dataset_path = pathlib.Path("./debug_dataset/hub_dataset/")
     data_module = DataModule(dataset_path=hub_dataset_path, batch_size=16)
     data_module.setup()
     train_data_loader = data_module.train_dataloader()
     assert len(train_data_loader) > 0
     minibatch = next(iter(train_data_loader))
-    assert "patches/data" in minibatch and len(minibatch["patches/data"]) <= 16
-    assert "patches/labels" in minibatch and len(minibatch["patches/labels"]) <= 16
+    assert "data" in minibatch and len(minibatch["data"]) <= 16
+    assert "labels" in minibatch and len(minibatch["labels"]) <= 16
+    assert minibatch["labels"].shape[1] == 43
     print("all done")
