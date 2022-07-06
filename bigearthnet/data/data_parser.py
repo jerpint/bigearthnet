@@ -1,5 +1,6 @@
 """Contains the raw dataset parsing and repackaging code for the BigEarthNet(-S2) dataset."""
 
+import argparse
 import dataclasses
 import datetime
 import json
@@ -16,6 +17,8 @@ import hub
 import pandas as pd
 import numpy as np
 import tqdm
+
+from bigearthnet.data.prepare_mini_dataset import download_splits
 
 logger = logging.getLogger(__name__)
 
@@ -299,13 +302,33 @@ class HubCompactor:
 if __name__ == "__main__":
     logging.basicConfig()
     logging.getLogger().setLevel(logging.NOTSET)
-    root_path = pathlib.Path("./debug_dataset/")
-    output_hub_path = pathlib.Path("./debug_dataset/hub_dataset/")
-    splits_path = pathlib.Path("./debug_dataset/splits/")
 
-    with open("class_list.json", 'r') as f:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--root-path",
+        help="Path to bigearthnet dataset.",
+    )
+    parser.add_argument(
+        "--output-hub-path",
+        help="Path to save constructed hub dataset.",
+    )
+    parser.add_argument(
+        "--splits-path",
+        help="Path to splits folder contraining train.csv, val.csv, and test.csv",
+    )
+    args = parser.parse_args()
+
+    root_path = args.root_path
+    output_hub_path = args.output_hub_path
+    splits_path = args.splits_path
+
+    if not os.path.isdir(splits_path):
+        print(f"Downloading splits to {splits_path}")
+        download_splits(splits_path)
+
+    dirpath = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(dirpath, "class_list.json"), 'r') as f:
         classes = json.load(f)
-
     for split in ["train", "val", "test"]:
         dataset = HubCompactor(
             root_path,

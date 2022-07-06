@@ -1,4 +1,4 @@
-"""Generate a small debug dataset from the original BigEarth data.
+"""Generate a mini dataset from the original BigEarth data.
 
 This script assumes the original data was already downloaded and extracted.
 It will then fetch the train, val and test splits from an external source, and
@@ -7,12 +7,17 @@ dataset can be used to work and test everything locally.
 
 Example usage:
 
-        $ python create_debug_dataset.py --splits-dir "splits/" --output-dir "debug_dataset/" --dataset-root-dir $SCRATCH/bigearth/BigEarthNet-v1.0 --tar
+        $ python prepare_mini_dataset.py \
+        --splits-dir "$SCRATCH/bigearth/splits/" \
+        --output-dir "$SCRATCH/bigearth/bigearth-mini/" \
+        --dataset-root-dir $SCRATCH/bigearth/BigEarthNet-v1.0 \
+        --split-samples 160 20 20
 
 """
 
 import argparse
 import os
+import pathlib
 import subprocess
 from shutil import copytree
 
@@ -46,48 +51,49 @@ def download_splits(splits_dir: str):
             download_from_url(url, dst)
 
 
-def generate_debug_splits(splits_dir, output_dir, split_samples, seed):
-    """Generates debug splits (train.csv, val.csv, test.csv) by random sampling the original split files.
+def generate_mini_splits(splits_dir, output_dir, split_samples, seed):
+    """Generates splits (train.csv, val.csv, test.csv) by random sampling the original split files.
 
     Files are saved in $output_dir/splits/ as csv files.
     """
-    debug_splits_dir = os.path.join(output_dir, "splits/")
-    if not os.path.isdir(debug_splits_dir):
-        os.makedirs(debug_splits_dir)
+    mini_splits_dir = os.path.join(output_dir, "splits/")
+    if not os.path.isdir(mini_splits_dir):
+        os.makedirs(mini_splits_dir)
 
     for split, num_samples in zip(SPLITS, split_samples):
         print(f"Sampling {num_samples} samples for {split}")
         split_fname = os.path.join(splits_dir, split + ".csv")
-        debug_fname = os.path.join(debug_splits_dir, split + ".csv")
+        mini_split_fname = os.path.join(mini_splits_dir, split + ".csv")
 
         sampled_split = sample_from_csv(split_fname, num_samples=num_samples, seed=seed)
-        sampled_split.to_csv(debug_fname, index=False, header=False)
+        sampled_split.to_csv(mini_split_fname, index=False, header=False)
 
 
-def generate_debug_dataset(dataset_root_dir, output_dir):
+def generate_mini_dataset(dataset_root_dir, output_dir):
     """Creates a new dataset comprised only of the samples referenced in the debug splits."""
-    print(f"Generating debug dataset in {os.path.abspath(output_dir)}...")
-    debug_splits_dir = os.path.join(output_dir, "splits/")
-    debug_data_dir = os.path.join(output_dir, "data/")
-    if not os.path.isdir(debug_data_dir):
-        os.makedirs(debug_data_dir)
+    print(f"Generating mini dataset in {os.path.abspath(output_dir)}...")
+    output_dir = pathlib.Path(output_dir)
+    mini_splits_dir = os.path.join(output_dir, "splits/")
+    mini_data_dir = os.path.join(output_dir, "data/")
+    if not os.path.isdir(mini_data_dir):
+        os.makedirs(mini_data_dir)
 
     for split in SPLITS:
-        print(f"copying debug {split} folders...")
-        split_fname = os.path.join(debug_splits_dir, split + ".csv")
+        print(f"copying sample {split} folders...")
+        split_fname = os.path.join(mini_splits_dir, split + ".csv")
         split_df = pd.read_csv(split_fname, header=None)
         folders = split_df[0].to_list()  # Each row in the csv is a folder name
         for folder in tqdm(folders):
             # Copy the folder from the original dataset to the debug dataset
             src = os.path.join(dataset_root_dir, folder)
-            dst = os.path.join(debug_data_dir, folder)
+            dst = os.path.join(mini_data_dir, folder)
             copytree(src, dst, dirs_exist_ok=True)
 
     # Compress the dataset to a tar archive
-    print("Compressing the debug dataset...")
-    tar_fname = "BigEarthNet-v1.0-Debug.tar"
-    subprocess.run(["tar", "zcf", tar_fname, output_dir], check=True)
-    print(f"Debug dataset saved to {os.path.abspath(tar_fname)}")
+    print("Compressing the mini dataset...")
+    tar_path = os.path.join(output_dir.parent, "bigearthnet-mini.tar")
+    subprocess.run(["tar", "zcf", tar_path, output_dir], check=True)
+    print(f"bighearth-mini dataset saved to {os.path.abspath(tar_path)}")
 
 
 if __name__ == "__main__":
@@ -111,8 +117,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--seed", help="Seed to use for reproducibility", type=int, default=42
     )
-
     args = parser.parse_args()
+
     splits_dir = args.splits_dir
     output_dir = args.output_dir
     dataset_root_dir = args.dataset_root_dir
@@ -124,14 +130,14 @@ if __name__ == "__main__":
         splits_dir=splits_dir,
     )
 
-    generate_debug_splits(
+    generate_mini_splits(
         splits_dir=splits_dir,
         output_dir=output_dir,
         split_samples=split_samples,
         seed=seed,
     )
 
-    generate_debug_dataset(
+    generate_mini_dataset(
         dataset_root_dir=dataset_root_dir,
         output_dir=output_dir,
     )
