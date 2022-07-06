@@ -38,7 +38,7 @@ def sample_from_csv(csv, num_samples, seed=None):
     return pd.read_csv(csv, header=None).sample(num_samples, random_state=seed)
 
 
-def download_splits(splits_dir: str):
+def download_full_splits(splits_dir: str):
     """Download the splits from $BASE_URL to splits_dir."""
     if not os.path.isdir(splits_dir):
         os.mkdir(splits_dir)
@@ -89,12 +89,6 @@ def generate_mini_dataset(dataset_root_dir, output_dir):
             dst = os.path.join(mini_data_dir, folder)
             copytree(src, dst, dirs_exist_ok=True)
 
-    # Compress the dataset to a tar archive
-    print("Compressing the mini dataset...")
-    tar_path = os.path.join(output_dir.parent, "bigearthnet-mini.tar")
-    subprocess.run(["tar", "zcf", tar_path, output_dir], check=True)
-    print(f"bighearth-mini dataset saved to {os.path.abspath(tar_path)}")
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -126,7 +120,7 @@ if __name__ == "__main__":
     seed = args.seed
     print(f"Arguments passed to CLI: {args}\n")
 
-    download_splits(
+    download_full_splits(
         splits_dir=splits_dir,
     )
 
