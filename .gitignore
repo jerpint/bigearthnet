@@ -1,7 +1,9 @@
 .idea
-mlruns
 
 lightning_logs/
+outputs/
+
+*.tar
 
 # Ignore example outputs
 examples/*/output/
