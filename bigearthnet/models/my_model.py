@@ -9,9 +9,10 @@ logger = logging.getLogger(__name__)
 
 class LitModel(pl.LightningModule):
     """Base class for Pytorch Lightning model - useful to reuse the same *_step methods."""
-    def __init__(self):
+    def __init__(self, model):
         super().__init__()
         self.loss_fn = torch.nn.BCEWithLogitsLoss()
+        self.model = model
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
@@ -21,7 +22,7 @@ class LitModel(pl.LightningModule):
         """Runs the prediction + evaluation step for training/validation/testing."""
         inputs = batch['data']
         targets = batch['labels']
-        outputs = self(inputs)
+        outputs = self.model(inputs)
         loss = self.loss_fn(outputs, targets.float())
         return loss
 
@@ -42,8 +43,8 @@ class LitModel(pl.LightningModule):
         self.log("test_loss", loss)
 
 
-class SimpleModel(LitModel):  # pragma: no cover
-    """Simple Model Class.
+class Baseline(torch.nn.Module):  # pragma: no cover
+    """Baseline Model Class.
 
     Inherits from the given framework's model class. This is a simple MLP model.
     """
@@ -57,7 +58,7 @@ class SimpleModel(LitModel):  # pragma: no cover
         Args:
             hyper_params (dict): hyper parameters from the config file.
         """
-        super(SimpleModel, self).__init__()
+        super(Baseline, self).__init__()
         self.conv_layers = nn.Sequential(
             nn.Conv2d(3, 64, 5),
             nn.ReLU(),
