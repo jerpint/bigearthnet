@@ -1,6 +1,7 @@
 import logging
 
-from bigearthnet.models.my_model import SimpleModel
+from bigearthnet.models.my_model import LitModel
+
 
 logger = logging.getLogger(__name__)
 
@@ -14,12 +15,15 @@ def load_model(architecture, num_classes):  # pragma: no cover
     Returns:
         model (obj): A neural network model object.
     """
-    if architecture == 'SimpleModel':
-        model = SimpleModel(num_classes=num_classes)
+    if architecture == 'baseline':
+        from bigearthnet.models.my_model import Baseline
+        model = Baseline(num_classes=num_classes)
+    elif architecture == 'resnet50d':
+        import timm
+        model = timm.create_model(architecture, pretrained=False, num_classes=num_classes)
     else:
         raise ValueError('architecture {} not supported'.format(architecture))
     logger.info('selected architecture: {}'.format(architecture))
     logger.info('model info:\n' + str(model) + '\n')
 
-
-    return model
+    return LitModel(model)
