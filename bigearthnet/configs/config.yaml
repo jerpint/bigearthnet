@@ -1,0 +1,10 @@
+datamodule:
+  dataset_path: "${oc.env:HOME}/bigearthnet/bigearthnet/data/bigearthnet-mini/"
+  batch_size: 16
+  num_workers: 0
+
+trainer:
+  max_epochs: 3
+
+defaults:
+  - model: baseline.yaml
