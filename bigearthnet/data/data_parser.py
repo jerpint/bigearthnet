@@ -18,7 +18,7 @@ import pandas as pd
 import numpy as np
 import tqdm
 
-from bigearthnet.data.prepare_mini_dataset import download_splits
+from bigearthnet.data.prepare_mini_dataset import download_full_splits
 
 logger = logging.getLogger(__name__)
 
@@ -177,8 +177,7 @@ class HubCompactor:
         assert len(self.patches) > 0
         tot_samples = len(self.patches)
         logger.info(f"loaded metadata for {tot_samples} patches")
-        #  self.class_map = class_map # self._compute_class_map(self.patches)
-        self.classes = classes # sorted(list(self.class_map.keys()))
+        self.classes = classes
         self.class_dist = self._compute_class_dist(self.patches)
         self.class2idx = {class_:idx for idx, class_ in enumerate(self.classes)}
         self.idx2class = {idx:class_ for idx, class_ in enumerate(self.classes)}
@@ -194,7 +193,7 @@ class HubCompactor:
         assert root.is_dir(), f"invalid big earth net root directory path ({root})"
         patches = []
         patch_folders = pd.read_csv(split_file, header=None)[0].to_list()  # Each row in the csv is a folder name
-        patch_folders = [pathlib.Path(os.path.join(root / "data", f)) for f in patch_folders]
+        patch_folders = [pathlib.Path(os.path.join(root, f)) for f in patch_folders]
         if show_progress_bar:
             patch_folders = tqdm.tqdm(patch_folders, desc="scanning patch folders")
         for patch_folder in patch_folders:
