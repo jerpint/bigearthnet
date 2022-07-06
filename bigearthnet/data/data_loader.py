@@ -154,13 +154,15 @@ class DataModule(pl.LightningDataModule):
         )
 
 
-def load_datamodule(hub_path, **kwargs):
-    data_module = DataModule(dataset_path=hub_path, **kwargs)
+def load_datamodule(dataset_path, **kwargs):
+    dataset_path = pathlib.Path(dataset_path)
+    data_module = DataModule(dataset_path=dataset_path, **kwargs)
     data_module.setup()
     return data_module
 
 
 if __name__ == "__main__":
+    # TODO: Put this as a test instead
     logging.basicConfig()
     logging.getLogger().setLevel(logging.NOTSET)
 
