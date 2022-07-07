@@ -10,6 +10,7 @@ setup(
         'flake8',
         'flake8-docstrings',
         'gitpython',
+        'hub',
         'hydra-core',
         'tqdm',
         'jupyter',
