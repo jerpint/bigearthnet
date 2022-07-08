@@ -1,10 +1,14 @@
+import logging
+
+import hydra
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
-import hydra
 from omegaconf import DictConfig
 
 from bigearthnet.data.data_loader import load_datamodule
 from bigearthnet.models.model_loader import load_model
+
+log = logging.getLogger(__name__)
 
 def load_callbacks():
     callbacks = []
@@ -31,6 +35,9 @@ def load_callbacks():
 @hydra.main(config_path="configs", config_name="config")
 def main(cfg: DictConfig):
 
+    log.info("Beginning training...")
+    log.info(f"Configurations specified: {cfg}")
+
     # data setup
     datamodule = load_datamodule(**cfg.datamodule)
     model = load_model(**cfg.model)
@@ -39,6 +46,8 @@ def main(cfg: DictConfig):
     # do the training
     trainer = pl.Trainer(**cfg.trainer, callbacks=callbacks)
     trainer.fit(model, datamodule=datamodule)
+
+    log.info("Training Done.")
 
 if __name__ == "__main__":
     main()
