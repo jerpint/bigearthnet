@@ -3,6 +3,7 @@ python ../prepare_mini_dataset.py \
 --output-dir "$SCRATCH/bigearthnet/bigearthnet-mini/" \
 --dataset-root-dir $SCRATCH/bigearthnet/BigEarthNet-v1.0 \
 --split-samples 80 10 10 \
+--seed 42 \
 
 python ../data_parser.py \
 --root-path "$SCRATCH/bigearthnet/bigearthnet-mini/data/" \
