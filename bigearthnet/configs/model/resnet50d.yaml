@@ -1,0 +1,2 @@
+architecture: resnet50d
+num_classes: 43

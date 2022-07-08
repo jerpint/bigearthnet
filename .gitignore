@@ -1,5 +1,11 @@
 .idea
-mlruns
+
+lightning_logs/
+outputs/
+
+bigearthnet/data/bigearthnet-mini/
+
+*.tar
 
 # Ignore example outputs
 examples/*/output/
