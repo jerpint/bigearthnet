@@ -13,4 +13,4 @@ python ../data_parser.py \
 --output-hub-path "$SCRATCH/bigearthnet/bigearthnet-medium/" \
 
 cd $SCRATCH/bigearthnet/
-tar  -zcf bigearthnet-mini.tar bigearthnet-mini/
+tar  -zcf bigearthnet-medium.tar bigearthnet-medium/
