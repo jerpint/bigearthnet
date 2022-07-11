@@ -1,3 +1,5 @@
+export BUGGER_OFF=True
+
 python ../prepare_mini_dataset.py \
 --splits-dir "$SCRATCH/bigearthnet/splits/" \
 --output-dir "$SCRATCH/bigearthnet/bigearthnet-mini/" \
