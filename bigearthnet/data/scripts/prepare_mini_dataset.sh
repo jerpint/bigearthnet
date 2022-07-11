@@ -12,5 +12,7 @@ python ../data_parser.py \
 --splits-path "$SCRATCH/bigearthnet/bigearthnet-mini/splits/" \
 --output-hub-path "$SCRATCH/bigearthnet/bigearthnet-mini/" \
 
+echo "compressing folder to tar archive..."
 cd $SCRATCH/bigearthnet/
 tar -zcf bigearthnet-mini.tar bigearthnet-mini/
+echo "done"
