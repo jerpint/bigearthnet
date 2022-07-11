@@ -1,9 +1,11 @@
 import logging
 
 import hydra
+from omegaconf import DictConfig
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
-from omegaconf import DictConfig
+from pytorch_lightning import Trainer
+from pytorch_lightning.loggers import TensorBoardLogger
 
 from bigearthnet.data.data_loader import load_datamodule
 from bigearthnet.models.model_loader import load_model
@@ -42,9 +44,10 @@ def main(cfg: DictConfig):
     datamodule = load_datamodule(**cfg.datamodule)
     model = load_model(**cfg.model)
     callbacks = load_callbacks()
+    logger = TensorBoardLogger(**cfg.logger)
 
     # do the training
-    trainer = pl.Trainer(**cfg.trainer, callbacks=callbacks)
+    trainer = pl.Trainer(**cfg.trainer, callbacks=callbacks, logger=logger)
     trainer.fit(model, datamodule=datamodule)
 
     log.info("Training Done.")
