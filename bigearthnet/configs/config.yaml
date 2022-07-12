@@ -3,8 +3,12 @@ datamodule:
   batch_size: 16
   num_workers: 0
 
+logger:
+  save_dir: "../../tb_logs/"
+  name: "bigearth"
+
 trainer:
-  max_epochs: 3
+  max_epochs: 5
 
 defaults:
   - model: baseline.yaml
