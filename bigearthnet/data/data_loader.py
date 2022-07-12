@@ -17,17 +17,13 @@ class HubDataset(torch.utils.data.dataset.Dataset):
 
     def __init__(
         self,
-        dataset_path_or_object: typing.Union[typing.Union[typing.AnyStr, pathlib.Path], hub.Dataset],
+        dataset_path: pathlib.Path,
         transforms=None,
         **extra_hub_kwargs,
     ):
         """Initialize the BigEarthNet-S2 hub dataset (in read-only mode)."""
-        if isinstance(dataset_path_or_object, hub.Dataset):
-            assert not extra_hub_kwargs, "dataset is already opened, can't use kwargs"
-            self.dataset = dataset_path_or_object
-        else:
-            self.dataset = hub.load(str(dataset_path_or_object), read_only=True, **extra_hub_kwargs)
-
+        self.dataset_path = dataset_path
+        self.dataset = hub.load(self.dataset_path, read_only=True, **extra_hub_kwargs)
         self.transforms = transforms
 
 
@@ -117,7 +113,7 @@ class DataModule(pl.LightningDataModule):
     ):
         """Validates the hyperparameter config dictionary and sets up internal attributes."""
         super().__init__()
-        self.dataset_path = dataset_path
+        self.dataset_path = pathlib.Path(dataset_path)
         self.batch_size = batch_size
         self.num_workers = num_workers
         self._extra_hub_kwargs = extra_hub_kwargs
@@ -183,32 +179,18 @@ class DataModule(pl.LightningDataModule):
             num_workers=self.num_workers,
         )
 
-def load_datamodule(dataset_path, **kwargs):
-    dataset_path = pathlib.Path(dataset_path)
-    tforms = load_transforms()
-    data_module = DataModule(dataset_path=dataset_path, transforms=tforms, **kwargs)
+from hydra.utils import instantiate
+def load_datamodule(cfg):
+    transforms = load_transforms(cfg)
+    data_module = DataModule(transforms=transforms, **cfg.datamodule)
     data_module.setup()
     return data_module
 
 
-def load_transforms():
-
-    mean = np.asarray([
-        721.2257105159645,  # B02
-        878.5158627345414,  # B03
-        869.6805989741447,  # B04
-    ], dtype=np.float32)
-    stddev = np.asarray([
-        1465.656553928543,  # B02
-        1359.523897551790,  # B03
-        1452.286444583796,  # B04
-    ], dtype=np.float32)
-
-    tforms = transforms.Compose([
-        transforms.Normalize(mean, stddev),
-        ])
-
-    return tforms
+def load_transforms(cfg):
+    return transforms.Compose([
+        instantiate(cfg.transforms)
+    ])
 
 
 if __name__ == "__main__":

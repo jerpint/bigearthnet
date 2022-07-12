@@ -41,8 +41,8 @@ def main(cfg: DictConfig):
     log.info(f"Configurations specified: {cfg}")
 
     # data setup
-    datamodule = load_datamodule(**cfg.datamodule)
-    model = load_model(**cfg.model)
+    datamodule = load_datamodule(cfg)
+    model = load_model(**cfg.model)  # TODO: remove **kwargs
     callbacks = load_callbacks()
     logger = TensorBoardLogger(**cfg.logger)
 

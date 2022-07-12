@@ -324,7 +324,7 @@ if __name__ == "__main__":
 
     if not os.path.isdir(splits_path):
         print(f"Downloading splits to {splits_path}")
-        download_splits(splits_path)
+        download_full_splits(splits_path)
 
     dirpath = os.path.dirname(os.path.abspath(__file__))
     with open(os.path.join(dirpath, "class_list.json"), 'r') as f:
