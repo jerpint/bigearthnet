@@ -1,6 +1,6 @@
 import logging
 
-from bigearthnet.models.my_model import LitModel
+from bigearthnet.pl_modules.lightning_module import LitModule
 
 
 logger = logging.getLogger(__name__)
@@ -26,4 +26,4 @@ def load_model(architecture, num_classes):  # pragma: no cover
     logger.info('selected architecture: {}'.format(architecture))
     logger.info('model info:\n' + str(model) + '\n')
 
-    return LitModel(model)
+    return LitModule(model)
