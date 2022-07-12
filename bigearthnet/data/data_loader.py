@@ -7,24 +7,29 @@ import numpy as np
 import pytorch_lightning as pl
 import torch.utils.data.dataset
 import torch.utils.data.dataloader
+from torchvision import transforms
 
 logger = logging.getLogger(__name__)
 
 
-class HubParser(torch.utils.data.dataset.Dataset):
-    """Dataset parser class used to iterate over the BigEarthNet-S2 data."""
+class HubDataset(torch.utils.data.dataset.Dataset):
+    """Dataset class used to iterate over the BigEarthNet-S2 data."""
 
     def __init__(
         self,
         dataset_path_or_object: typing.Union[typing.Union[typing.AnyStr, pathlib.Path], hub.Dataset],
+        transforms=None,
         **extra_hub_kwargs,
     ):
-        """Initialize the BigEarthNet-S2 hub dataset parser (in read-only mode)."""
+        """Initialize the BigEarthNet-S2 hub dataset (in read-only mode)."""
         if isinstance(dataset_path_or_object, hub.Dataset):
             assert not extra_hub_kwargs, "dataset is already opened, can't use kwargs"
             self.dataset = dataset_path_or_object
         else:
             self.dataset = hub.load(str(dataset_path_or_object), read_only=True, **extra_hub_kwargs)
+
+        self.transforms = transforms
+
 
     def __len__(self) -> int:
         """Returns the total size (patch count) of the dataset."""
@@ -40,11 +45,21 @@ class HubParser(torch.utils.data.dataset.Dataset):
         """
         item = self.dataset[int(idx)]  # cast in case we're using numpy ints or something similar
         assert tuple(self.tensor_names) == ("data", "labels")
+
+        labels_idx = item["labels"].numpy()
         onehot_labels = np.zeros((len(self.class_names), ), dtype=np.int16)
-        onehot_labels[item["labels"].numpy()] = 1
+        onehot_labels[labels_idx] = 1
+        labels = torch.tensor(onehot_labels)
+
+        img_data = item["data"].numpy().astype(np.float32)
+        img_data = torch.tensor(img_data)
+
+        if self.transforms:
+            img_data = self.transforms(img_data)
+
         return {
-            "data": item["data"].numpy().astype(np.float32),
-            "labels": onehot_labels,
+            "data": img_data,
+            "labels": labels,
         }
 
     def summary(self) -> None:
@@ -97,6 +112,7 @@ class DataModule(pl.LightningDataModule):
         dataset_path: typing.Union[typing.AnyStr, pathlib.Path],
         batch_size: int,
         num_workers: int = 0,
+        transforms=None,
         **extra_hub_kwargs,
     ):
         """Validates the hyperparameter config dictionary and sets up internal attributes."""
@@ -105,7 +121,8 @@ class DataModule(pl.LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self._extra_hub_kwargs = extra_hub_kwargs
-        self.train_parser, self.valid_parser, self.test_parser = None, None, None
+        self.train_dataset, self.valid_dataset, self.test_dataset = None, None, None
+        self.transforms = transforms
 
     def prepare_data(self):
         """Downloads/extracts/unpacks the data if needed."""
@@ -113,52 +130,85 @@ class DataModule(pl.LightningDataModule):
 
 
     def setup(self, stage=None) -> None:
-        """Parses and splits all samples across the train/valid/test parsers."""
+        """Parses and splits all samples across the train/valid/test datasets."""
         if stage == "fit" or stage is None:
-            if self.train_parser is None:
-                self.train_parser = HubParser(self.dataset_path / "train", **self._extra_hub_kwargs)
-            if self.valid_parser is None:
-                self.valid_parser = HubParser(self.dataset_path / "val", **self._extra_hub_kwargs)
+            if self.train_dataset is None:
+                self.train_dataset = HubDataset(
+                        self.dataset_path / "train",
+                        transforms=self.transforms,
+                        **self._extra_hub_kwargs,
+                        )
+            if self.valid_dataset is None:
+                self.valid_dataset = HubDataset(
+                        self.dataset_path / "val",
+                        transforms=self.transforms,
+                        **self._extra_hub_kwargs,
+                        )
         if stage == "test" or stage is None:
-            if self.test_parser is None:
-                self.valid_parser = HubParser(self.dataset_path / "test", **self._extra_hub_kwargs)
+            if self.test_dataset is None:
+                self.test_dataset = HubDataset(
+                        self.dataset_path / "test",
+                        transforms=self.transforms,
+                        **self._extra_hub_kwargs,
+                        )
 
     def train_dataloader(self) -> torch.utils.data.dataloader.DataLoader:
-        """Creates the training dataloader using the training data parser."""
-        assert self.train_parser is not None, "must call 'setup' first!"
+        """Creates the training dataloader using the training dataset."""
+        assert self.train_dataset is not None, "must call 'setup' first!"
         return torch.utils.data.dataloader.DataLoader(
-            dataset=self.train_parser,
+            dataset=self.train_dataset,
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
         )
 
+
     def val_dataloader(self) -> torch.utils.data.dataloader.DataLoader:
         """Creates the validation dataloader using the validation data parser."""
-        assert self.valid_parser is not None, "must call 'setup' first!"
+        assert self.valid_dataset is not None, "must call 'setup' first!"
         return torch.utils.data.dataloader.DataLoader(
-            dataset=self.valid_parser,
+            dataset=self.valid_dataset,
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
         )
 
     def test_dataloader(self) -> torch.utils.data.dataloader.DataLoader:
-        """Creates the testing dataloader using the testing data parser."""
-        assert self.test_parser is not None, "must call 'setup' first!"
+        """Creates the testing dataloader using the testing data dataset."""
+        assert self.test_dataset is not None, "must call 'setup' first!"
         return torch.utils.data.dataloader.DataLoader(
-            dataset=self.test_parser,
+            dataset=self.test_dataset,
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
         )
 
-
 def load_datamodule(dataset_path, **kwargs):
     dataset_path = pathlib.Path(dataset_path)
-    data_module = DataModule(dataset_path=dataset_path, **kwargs)
+    tforms = load_transforms()
+    data_module = DataModule(dataset_path=dataset_path, transforms=tforms, **kwargs)
     data_module.setup()
     return data_module
+
+
+def load_transforms():
+
+    mean = np.asarray([
+        721.2257105159645,  # B02
+        878.5158627345414,  # B03
+        869.6805989741447,  # B04
+    ], dtype=np.float32)
+    stddev = np.asarray([
+        1465.656553928543,  # B02
+        1359.523897551790,  # B03
+        1452.286444583796,  # B04
+    ], dtype=np.float32)
+
+    tforms = transforms.Compose([
+        transforms.Normalize(mean, stddev),
+        ])
+
+    return tforms
 
 
 if __name__ == "__main__":

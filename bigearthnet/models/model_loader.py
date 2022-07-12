@@ -16,7 +16,7 @@ def load_model(architecture, num_classes):  # pragma: no cover
         model (obj): A neural network model object.
     """
     if architecture == 'baseline':
-        from bigearthnet.models.my_model import Baseline
+        from bigearthnet.models.baseline import Baseline
         model = Baseline(num_classes=num_classes)
     elif architecture == 'resnet50d':
         import timm

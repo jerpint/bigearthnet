@@ -56,6 +56,7 @@ bigearthnet_metadata_field_names = [
 """List of metadata field names that we expect to find in the JSON metadata of each patch."""
 
 
+
 @dataclasses.dataclass
 class BigEarthNetPatch:
     """Defines the (meta)data of a single patch inside the BigEarthNet(-S2) dataset."""
