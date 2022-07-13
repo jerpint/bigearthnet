@@ -21,6 +21,23 @@ class LitModel(pl.LightningModule):
         self.model = instantiate(cfg.model)
         self.loss_fn = torch.nn.BCEWithLogitsLoss()
 
+    def on_train_start(self):
+        mode = self.cfg.monitor.mode
+        name = self.cfg.monitor.name
+        init_metrics = {
+            "best_metrics/loss": 99990,
+            "best_metrics/precision": 0,
+            "best_metrics/recall": 0,
+            "best_metrics/f1_score": 0,
+        }
+
+        assert mode in ["min", "max"]
+        self.logger.log_hyperparams(
+                self.cfg,
+                metrics=init_metrics)
+
+        self.best_metric = init_metrics[f"best_metrics/{name}"]
+
     def configure_optimizers(self):
 
         name = self.cfg.optimizer.name
@@ -54,6 +71,7 @@ class LitModel(pl.LightningModule):
 
         all_targets = []
         all_preds = []
+        all_loss= []
         for outputs in step_outputs:
             logits = outputs['logits']
             targets = outputs['targets']
@@ -61,7 +79,11 @@ class LitModel(pl.LightningModule):
             all_targets.extend(targets.numpy())
             all_preds.extend(preds.type(targets.dtype).numpy())
 
+            loss = outputs['loss']
+            all_loss.append(loss.cpu().numpy())
+
         prec, rec, f1, s = precision_recall_fscore_support(y_true=all_targets, y_pred=all_preds, average="micro")
+        avg_loss = sum(all_loss) / len(all_loss)
         conf_mats = multilabel_confusion_matrix(y_true=all_targets, y_pred=all_preds)
         report = classification_report(y_true=all_targets, y_pred=all_preds, target_names=class_names)
 
@@ -71,6 +93,7 @@ class LitModel(pl.LightningModule):
                 'f1_score': f1,
                 'conf_mats': conf_mats,
                 'report': report,
+                'loss': avg_loss
         }
         return metrics
 
@@ -103,10 +126,27 @@ class LitModel(pl.LightningModule):
         log.info(f"{split} classification report:\n{metrics['report']}")
 
 
+    def update_best_metric(self, metrics):
+        """Update the best scoring metric for parallel coordinate plots."""
+        mode = self.cfg.monitor.mode
+        name = self.cfg.monitor.name
+        update = False
+        if mode == "min" and metrics[name] < self.best_metric:
+            update = True
+        if mode == "max" and metrics[name] > self.best_metric:
+            update = True
+        if update:
+            self.logger.log_hyperparams(
+                    self.cfg,
+                    metrics={f"best_metrics/{k}": metrics[k] for k in ["loss", "precision", "recall", "f1_score"]}
+            )
+            self.best_metric = metrics[name]
     def validation_epoch_end(self, validation_step_outputs):
         if not self.trainer.sanity_checking:
             metrics = self._generic_epoch_end(validation_step_outputs)
             self.log_metrics(metrics, split="val")
+            self.update_best_metric(metrics)
+
 
     def test_step(self, batch, batch_idx):
         """Runs a prediction step for testing, logging the loss."""

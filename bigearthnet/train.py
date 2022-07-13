@@ -11,7 +11,7 @@ from bigearthnet.data.data_loader import load_datamodule
 
 log = logging.getLogger(__name__)
 
-def load_callbacks():
+def load_callbacks(cfg):
     callbacks = []
 
     last_model_checkpoint = ModelCheckpoint(
@@ -24,8 +24,8 @@ def load_callbacks():
 
     best_model_checkpoint = ModelCheckpoint(
         save_top_k=1,
-        monitor="loss/val",
-        mode='min',
+        monitor=f"{cfg.monitor.name}/val",
+        mode=cfg.monitor.mode,
         filename="best-model-{epoch:02d}-{val_loss:.2f}",
     )
     callbacks.append(best_model_checkpoint)
@@ -45,7 +45,7 @@ def main(cfg: DictConfig):
     # data setup
     model = LitModel(cfg)
     datamodule = load_datamodule(cfg)
-    callbacks = load_callbacks()
+    callbacks = load_callbacks(cfg)
     logger = TensorBoardLogger(**cfg.logger)
 
     # do the training

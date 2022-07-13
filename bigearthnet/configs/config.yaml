@@ -26,6 +26,10 @@ logger:
   save_dir: "../../tb_logs/"
   name: "bigearth"
 
+monitor:
+  name: "precision"
+  mode: "max"
+
 trainer:
   max_epochs: 5
 
