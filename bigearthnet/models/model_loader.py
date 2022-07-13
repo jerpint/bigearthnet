@@ -1,12 +1,13 @@
 import logging
 
+from hydra.utils import instantiate
 from bigearthnet.pl_modules.lightning_module import LitModule
 
 
 logger = logging.getLogger(__name__)
 
 
-def load_model(architecture, num_classes):  # pragma: no cover
+def load_model(cfg):  # pragma: no cover
     """Instantiate a model.
 
     Args:
@@ -15,15 +16,7 @@ def load_model(architecture, num_classes):  # pragma: no cover
     Returns:
         model (obj): A neural network model object.
     """
-    if architecture == 'baseline':
-        from bigearthnet.models.baseline import Baseline
-        model = Baseline(num_classes=num_classes)
-    elif architecture == 'resnet50d':
-        import timm
-        model = timm.create_model(architecture, pretrained=False, num_classes=num_classes)
-    else:
-        raise ValueError('architecture {} not supported'.format(architecture))
-    logger.info('selected architecture: {}'.format(architecture))
+    model = instantiate(cfg.model)
     logger.info('model info:\n' + str(model) + '\n')
 
     return LitModule(model)
