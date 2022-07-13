@@ -2,22 +2,42 @@ import logging
 import typing
 
 import torch
+from torch import optim
 import pytorch_lightning as pl
+from hydra.utils import instantiate
 from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.metrics import classification_report
+from sklearn.metrics import precision_recall_fscore_support
 
 log = logging.getLogger(__name__)
 
 
-class LitModule(pl.LightningModule):
+class LitModel(pl.LightningModule):
     """Base class for Pytorch Lightning model - useful to reuse the same *_step methods."""
-    def __init__(self, model):
+    def __init__(self, cfg):
         super().__init__()
+        self.cfg = cfg
+
+        self.model = instantiate(cfg.model)
         self.loss_fn = torch.nn.BCEWithLogitsLoss()
-        self.model = model
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+
+        name = self.cfg.optimizer.name
+        lr = self.cfg.optimizer.lr
+        if name == 'adam':
+            #  optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+            optimizer = optim.Adam(
+                    self.model.parameters(),
+                    lr=lr,
+            )
+        elif name == 'sgd':
+            optimizer = optim.SGD(
+                    self.model.parameters(),
+                    lr=lr
+            )
+        else:
+            raise ValueError(f'optimizer {name} not supported')
         return optimizer
 
     def _generic_step(self, batch, batch_idx):
