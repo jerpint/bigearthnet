@@ -76,8 +76,8 @@ class LitModel(pl.LightningModule):
             logits = outputs['logits']
             targets = outputs['targets']
             preds = (torch.sigmoid(logits) > 0.5)
-            all_targets.extend(targets.numpy())
-            all_preds.extend(preds.type(targets.dtype).numpy())
+            all_targets.extend(targets.cpu().numpy())
+            all_preds.extend(preds.type(targets.dtype).cpu().numpy())
 
             loss = outputs['loss']
             all_loss.append(loss.cpu().numpy())
