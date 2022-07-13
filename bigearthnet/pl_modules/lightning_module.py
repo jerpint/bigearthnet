@@ -48,13 +48,8 @@ class LitModel(pl.LightningModule):
         loss = self.loss_fn(logits, targets.float())
         return {"loss": loss, "targets": targets, "logits": logits}
 
-    def training_step(self, batch, batch_idx):
-        """Runs a prediction step for training, returning the loss."""
-        results = self._generic_step(batch, batch_idx)
-        self.log("train_loss", results["loss"], on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        return results
-
     def _generic_epoch_end(self, step_outputs):
+
         class_names = self.trainer.train_dataloader.dataset.datasets.class_names
 
         all_targets = []
@@ -66,33 +61,54 @@ class LitModel(pl.LightningModule):
             all_targets.extend(targets.numpy())
             all_preds.extend(preds.type(targets.dtype).numpy())
 
+        prec, rec, f1, s = precision_recall_fscore_support(y_true=all_targets, y_pred=all_preds, average="micro")
         conf_mats = multilabel_confusion_matrix(y_true=all_targets, y_pred=all_preds)
         report = classification_report(y_true=all_targets, y_pred=all_preds, target_names=class_names)
-        return conf_mats, report
+
+        metrics = {
+                'precision': prec,
+                'recall': rec,
+                'f1_score': f1,
+                'conf_mats': conf_mats,
+                'report': report,
+        }
+        return metrics
+
+    def training_step(self, batch, batch_idx):
+        """Runs a prediction step for training, returning the loss."""
+        outputs = self._generic_step(batch, batch_idx)
+        self.log("loss/train", outputs["loss"], on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        return outputs
 
     def training_epoch_end(self, training_step_outputs):
-        report, conf_mats = self._generic_epoch_end(training_step_outputs)
-        log.info(f"Train epoch: {self.current_epoch}")
-        log.info(f"Training Conf mats:\n{conf_mats}")
-        log.info(f"Training classification report:\n{report}")
+        metrics = self._generic_epoch_end(training_step_outputs)
+        self.log_metrics(metrics, split="train")
         # TODO: log this to tensorboard
-
 
     def validation_step(self, batch, batch_idx):
         """Runs a prediction step for validation, logging the loss."""
-        results = self._generic_step(batch, batch_idx)
-        self.log("val_loss", results["loss"], on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        return results
+        outputs = self._generic_step(batch, batch_idx)
+        self.log("loss/val", outputs["loss"], on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        return outputs
+
+    def log_metrics(self, metrics: typing.Dict, split: str):
+        # log to tensorboard
+        self.log(f"precision/{split}", metrics["precision"], on_epoch=True)
+        self.log(f"recall/{split}", metrics["recall"], on_epoch=True)
+        self.log(f"f1_score/{split}", metrics["f1_score"], on_epoch=True)
+
+        # add to logs
+        log.info(f"{split} epoch: {self.current_epoch}")
+        log.info(f"{split} Conf mats:\n{metrics['conf_mats']}")
+        log.info(f"{split} classification report:\n{metrics['report']}")
+
 
     def validation_epoch_end(self, validation_step_outputs):
         if not self.trainer.sanity_checking:
-            report, conf_mats = self._generic_epoch_end(validation_step_outputs)
-            log.info(f"Validation epoch: {self.current_epoch}")
-            log.info(f"Validation Conf mats:\n{conf_mats}")
-            log.info(f"Validation classification report:\n{report}")
-            # TODO: log this to tensorboard
+            metrics = self._generic_epoch_end(validation_step_outputs)
+            self.log_metrics(metrics, split="val")
 
     def test_step(self, batch, batch_idx):
         """Runs a prediction step for testing, logging the loss."""
-        results = self._generic_step(batch, batch_idx)
-        self.log("test_loss", results["loss"])
+        outputs = self._generic_step(batch, batch_idx)
+        self.log("test_loss", outputs["loss"])
