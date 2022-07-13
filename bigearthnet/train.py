@@ -1,7 +1,7 @@
 import logging
 
 import hydra
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning import Trainer
@@ -38,7 +38,10 @@ def load_callbacks():
 def main(cfg: DictConfig):
 
     log.info("Beginning training...")
+
+    # Log and save the config used for reproducibility
     log.info(f"Configurations specified: {cfg}")
+    OmegaConf.save(cfg, "exp_config.yaml")
 
     # data setup
     datamodule = load_datamodule(cfg)
