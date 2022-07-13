@@ -56,6 +56,7 @@ bigearthnet_metadata_field_names = [
 """List of metadata field names that we expect to find in the JSON metadata of each patch."""
 
 
+
 @dataclasses.dataclass
 class BigEarthNetPatch:
     """Defines the (meta)data of a single patch inside the BigEarthNet(-S2) dataset."""
@@ -323,7 +324,7 @@ if __name__ == "__main__":
 
     if not os.path.isdir(splits_path):
         print(f"Downloading splits to {splits_path}")
-        download_splits(splits_path)
+        download_full_splits(splits_path)
 
     dirpath = os.path.dirname(os.path.abspath(__file__))
     with open(os.path.join(dirpath, "class_list.json"), 'r') as f:

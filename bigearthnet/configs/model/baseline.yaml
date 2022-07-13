@@ -1,2 +1,2 @@
-architecture: baseline
+_target_: bigearthnet.models.baseline.Baseline
 num_classes: 43

@@ -1,2 +1,4 @@
-architecture: resnet50d
+_target_: timm.create_model
+model_name: resnet50d
 num_classes: 43
+pretrained: true
