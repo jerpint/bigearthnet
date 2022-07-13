@@ -7,6 +7,7 @@ import numpy as np
 import pytorch_lightning as pl
 import torch.utils.data.dataset
 import torch.utils.data.dataloader
+from hydra.utils import instantiate
 from torchvision import transforms
 
 logger = logging.getLogger(__name__)
@@ -105,7 +106,7 @@ class DataModule(pl.LightningDataModule):
 
     def __init__(
         self,
-        dataset_path: typing.Union[typing.AnyStr, pathlib.Path],
+        dataset_path: str,
         batch_size: int,
         num_workers: int = 0,
         transforms=None,
@@ -179,18 +180,18 @@ class DataModule(pl.LightningDataModule):
             num_workers=self.num_workers,
         )
 
-from hydra.utils import instantiate
+def load_transforms(cfg):
+    if cfg.get("transforms"):
+        return transforms.Compose(
+                [instantiate(T) for T in cfg.transforms]
+        )
+    return None
+
 def load_datamodule(cfg):
     transforms = load_transforms(cfg)
     data_module = DataModule(transforms=transforms, **cfg.datamodule)
     data_module.setup()
     return data_module
-
-
-def load_transforms(cfg):
-    return transforms.Compose([
-        instantiate(cfg.transforms)
-    ])
 
 
 if __name__ == "__main__":
