@@ -2,8 +2,8 @@ import logging
 import os
 import socket
 
-from pip._internal.operations import freeze
 from git import InvalidGitRepositoryError, Repo
+from pip._internal.operations import freeze
 
 logger = logging.getLogger(__name__)
 

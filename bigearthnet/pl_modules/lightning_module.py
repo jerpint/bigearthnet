@@ -1,13 +1,15 @@
 import logging
 import typing
 
-import torch
-from torch import optim
 import pytorch_lightning as pl
+import torch
 from hydra.utils import instantiate
-from sklearn.metrics import multilabel_confusion_matrix
-from sklearn.metrics import classification_report
-from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import (
+    classification_report,
+    multilabel_confusion_matrix,
+    precision_recall_fscore_support,
+)
+from torch import optim
 
 log = logging.getLogger(__name__)
 
