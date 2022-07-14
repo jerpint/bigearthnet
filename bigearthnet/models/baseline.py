@@ -39,9 +39,13 @@ class Baseline(torch.nn.Module):  # pragma: no cover
         )
         self.flatten = nn.Flatten()
         self.mlp_layers = nn.Sequential(
-            nn.Linear(576, 128),  # The input size for the linear layer is determined by the previous operations
+            nn.Linear(
+                576, 128
+            ),  # The input size for the linear layer is determined by the previous operations
             nn.ReLU(),
-            nn.Linear(128, num_classes),  # Here we get exactly num_classes logits at the output
+            nn.Linear(
+                128, num_classes
+            ),  # Here we get exactly num_classes logits at the output
         )
 
     def forward(self, x):

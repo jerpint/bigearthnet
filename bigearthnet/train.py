@@ -1,15 +1,16 @@
 import logging
 
 import hydra
-from omegaconf import DictConfig, OmegaConf
 import pytorch_lightning as pl
-from pytorch_lightning import callbacks
-from pytorch_lightning import Trainer
+from omegaconf import DictConfig, OmegaConf
+from pytorch_lightning import Trainer, callbacks
 from pytorch_lightning.loggers import TensorBoardLogger
-from bigearthnet.pl_modules.lightning_module import LitModel
+
 from bigearthnet.data.data_loader import load_datamodule
+from bigearthnet.pl_modules.lightning_module import LitModel
 
 log = logging.getLogger(__name__)
+
 
 def load_callbacks(cfg):
     all_callbacks = []
@@ -60,6 +61,7 @@ def main(cfg: DictConfig):
     trainer.fit(model, datamodule=datamodule)
 
     log.info("Training Done.")
+
 
 if __name__ == "__main__":
     main()

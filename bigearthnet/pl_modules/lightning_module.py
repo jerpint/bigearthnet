@@ -1,19 +1,22 @@
 import logging
 import typing
 
-import torch
-from torch import optim
 import pytorch_lightning as pl
+import torch
 from hydra.utils import instantiate
-from sklearn.metrics import multilabel_confusion_matrix
-from sklearn.metrics import classification_report
-from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import (
+    classification_report,
+    multilabel_confusion_matrix,
+    precision_recall_fscore_support,
+)
+from torch import optim
 
 log = logging.getLogger(__name__)
 
 
 class LitModel(pl.LightningModule):
     """Base class for Pytorch Lightning model - useful to reuse the same *_step methods."""
+
     def __init__(self, cfg):
         super().__init__()
         self.cfg = cfg
@@ -33,9 +36,7 @@ class LitModel(pl.LightningModule):
             "best_metrics/f1_score": 0,
         }
 
-        self.logger.log_hyperparams(
-                self.cfg,
-                metrics=init_metrics)
+        self.logger.log_hyperparams(self.cfg, metrics=init_metrics)
 
         self.best_metric = init_metrics[f"best_metrics/{name}"]
 
@@ -43,24 +44,21 @@ class LitModel(pl.LightningModule):
 
         name = self.cfg.optimizer.name
         lr = self.cfg.optimizer.lr
-        if name == 'adam':
+        if name == "adam":
             optimizer = optim.Adam(
-                    self.model.parameters(),
-                    lr=lr,
+                self.model.parameters(),
+                lr=lr,
             )
-        elif name == 'sgd':
-            optimizer = optim.SGD(
-                    self.model.parameters(),
-                    lr=lr
-            )
+        elif name == "sgd":
+            optimizer = optim.SGD(self.model.parameters(), lr=lr)
         else:
-            raise ValueError(f'optimizer {name} not supported')
+            raise ValueError(f"optimizer {name} not supported")
         return optimizer
 
     def _generic_step(self, batch, batch_idx):
         """Runs the prediction + evaluation step for training/validation/testing."""
-        inputs = batch['data']
-        targets = batch['labels']
+        inputs = batch["data"]
+        targets = batch["labels"]
         logits = self.model(inputs)
         loss = self.loss_fn(logits, targets.float())
         return {"loss": loss, "targets": targets, "logits": logits}
@@ -71,36 +69,47 @@ class LitModel(pl.LightningModule):
 
         all_targets = []
         all_preds = []
-        all_loss= []
+        all_loss = []
         for outputs in step_outputs:
-            logits = outputs['logits']
-            targets = outputs['targets']
-            preds = (torch.sigmoid(logits) > 0.5)
+            logits = outputs["logits"]
+            targets = outputs["targets"]
+            preds = torch.sigmoid(logits) > 0.5
             all_targets.extend(targets.cpu().numpy())
             all_preds.extend(preds.type(targets.dtype).cpu().numpy())
 
-            loss = outputs['loss']
+            loss = outputs["loss"]
             all_loss.append(loss.cpu().numpy())
 
-        prec, rec, f1, s = precision_recall_fscore_support(y_true=all_targets, y_pred=all_preds, average="micro")
+        prec, rec, f1, s = precision_recall_fscore_support(
+            y_true=all_targets, y_pred=all_preds, average="micro"
+        )
         avg_loss = sum(all_loss) / len(all_loss)
         conf_mats = multilabel_confusion_matrix(y_true=all_targets, y_pred=all_preds)
-        report = classification_report(y_true=all_targets, y_pred=all_preds, target_names=class_names)
+        report = classification_report(
+            y_true=all_targets, y_pred=all_preds, target_names=class_names
+        )
 
         metrics = {
-                'precision': prec,
-                'recall': rec,
-                'f1_score': f1,
-                'conf_mats': conf_mats,
-                'report': report,
-                'loss': avg_loss
+            "precision": prec,
+            "recall": rec,
+            "f1_score": f1,
+            "conf_mats": conf_mats,
+            "report": report,
+            "loss": avg_loss,
         }
         return metrics
 
     def training_step(self, batch, batch_idx):
         """Runs a prediction step for training, returning the loss."""
         outputs = self._generic_step(batch, batch_idx)
-        self.log("loss/train", outputs["loss"], on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.log(
+            "loss/train",
+            outputs["loss"],
+            on_step=True,
+            on_epoch=True,
+            prog_bar=True,
+            logger=True,
+        )
         return outputs
 
     def training_epoch_end(self, training_step_outputs):
@@ -110,7 +119,14 @@ class LitModel(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         """Runs a prediction step for validation, logging the loss."""
         outputs = self._generic_step(batch, batch_idx)
-        self.log("loss/val", outputs["loss"], on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.log(
+            "loss/val",
+            outputs["loss"],
+            on_step=True,
+            on_epoch=True,
+            prog_bar=True,
+            logger=True,
+        )
         return outputs
 
     def log_metrics(self, metrics: typing.Dict, split: str):
@@ -124,7 +140,6 @@ class LitModel(pl.LightningModule):
         log.info(f"{split} Conf mats:\n{metrics['conf_mats']}")
         log.info(f"{split} classification report:\n{metrics['report']}")
 
-
     def update_best_metric(self, metrics):
         """Update the best scoring metric for parallel coordinate plots."""
         mode = self.cfg.monitor.mode
@@ -136,8 +151,11 @@ class LitModel(pl.LightningModule):
             update = True
         if update:
             self.logger.log_hyperparams(
-                    self.cfg,
-                    metrics={f"best_metrics/{k}": metrics[k] for k in ["loss", "precision", "recall", "f1_score"]}
+                self.cfg,
+                metrics={
+                    f"best_metrics/{k}": metrics[k]
+                    for k in ["loss", "precision", "recall", "f1_score"]
+                },
             )
             self.best_metric = metrics[name]
 
@@ -146,7 +164,6 @@ class LitModel(pl.LightningModule):
             metrics = self._generic_epoch_end(validation_step_outputs)
             self.log_metrics(metrics, split="val")
             self.update_best_metric(metrics)
-
 
     def test_step(self, batch, batch_idx):
         """Runs a prediction step for testing, logging the loss."""
