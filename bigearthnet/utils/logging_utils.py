@@ -1,42 +1,11 @@
 import logging
-import mlflow
 import os
 import socket
 
 from pip._internal.operations import freeze
 from git import InvalidGitRepositoryError, Repo
-from mlflow.utils.mlflow_tags import MLFLOW_RUN_NOTE
 
 logger = logging.getLogger(__name__)
-
-
-class LoggerWriter:  # pragma: no cover
-    """LoggerWriter.
-
-    see: https://stackoverflow.com/questions/19425736/
-    how-to-redirect-stdout-and-stderr-to-logger-in-python
-    """
-
-    def __init__(self, printer):
-        """__init__.
-
-        Args:
-            printer: (fn) function used to print message (e.g., logger.info).
-        """
-        self.printer = printer
-
-    def write(self, message):
-        """write.
-
-        Args:
-            message: (str) message to print.
-        """
-        if message != '\n':
-            self.printer(message)
-
-    def flush(self):
-        """flush."""
-        pass
 
 
 def get_git_hash(script_location):  # pragma: no cover
@@ -56,7 +25,7 @@ def get_git_hash(script_location):  # pragma: no cover
     return commit_hash
 
 
-def log_exp_details(script_location, args):  # pragma: no cover
+def log_exp_details(script_location):  # pragma: no cover
     """Will log the experiment details to both screen logger and mlflow.
 
     :param script_location: (str) path to the script inside the git repos we want to find.
@@ -65,9 +34,9 @@ def log_exp_details(script_location, args):  # pragma: no cover
     git_hash = get_git_hash(script_location)
     hostname = socket.gethostname()
     dependencies = freeze.freeze()
-    details = "\nhostname: {}\ngit code hash: {}\ndata folder: {}\ndata folder (abs): {}\n\n" \
-              "dependencies:\n{}".format(
-                  hostname, git_hash, args.data, os.path.abspath(args.data),
-                  '\n'.join(dependencies))
+    details = f"""
+              hostname: {hostname}
+              git code hash: {git_hash}
+              dependencies: {dependencies}
+              """
     logger.info('Experiment info:' + details + '\n')
-    mlflow.set_tag(key=MLFLOW_RUN_NOTE, value=details)
