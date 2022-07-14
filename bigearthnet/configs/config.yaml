@@ -32,6 +32,7 @@ monitor:
 
 trainer:
   max_epochs: 5
+  profiler: "pytorch"
 
 defaults:
   - model: baseline.yaml

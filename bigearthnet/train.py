@@ -3,7 +3,7 @@ import logging
 import hydra
 from omegaconf import DictConfig, OmegaConf
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks import ModelCheckpoint, DeviceStatsMonitor
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
 from bigearthnet.pl_modules.lightning_module import LitModel
