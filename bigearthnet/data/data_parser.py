@@ -23,7 +23,18 @@ from bigearthnet.data.prepare_mini_dataset import download_full_splits
 logger = logging.getLogger(__name__)
 
 sentinel2_band_names = [
-    "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B8A", "B09", "B11", "B12"
+    "B01",
+    "B02",
+    "B03",
+    "B04",
+    "B05",
+    "B06",
+    "B07",
+    "B08",
+    "B8A",
+    "B09",
+    "B11",
+    "B12",
 ]
 """Full list of all (12) band names in Sentinel-2 Level 2A tile data.
 
@@ -39,7 +50,9 @@ sentinel2_band_map = {
 }
 """Sentinel-2 Level 2A target band string mappings for ease-of-use while loading the dataset."""
 
-bigearthnet_patch_name_pattern = re.compile(r"^([\w\d]+)_MSIL2A_(\d{8}T(\d+))_(\d+)_(\d+)$")
+bigearthnet_patch_name_pattern = re.compile(
+    r"^([\w\d]+)_MSIL2A_(\d{8}T(\d+))_(\d+)_(\d+)$"
+)
 """BigEarthNet(-S2) dataset patch folder name pattern.
 
 The first group indicates the Sentinel-2 mission ID that can be either S2A or S2B, the second
@@ -51,10 +64,13 @@ See https://bigearth.net/static/documents/Description_BigEarthNet-S2.pdf for mor
 """
 
 bigearthnet_metadata_field_names = [
-    "labels", "coordinates", "projection", "tile_source", "acquisition_date",
+    "labels",
+    "coordinates",
+    "projection",
+    "tile_source",
+    "acquisition_date",
 ]
 """List of metadata field names that we expect to find in the JSON metadata of each patch."""
-
 
 
 @dataclasses.dataclass
@@ -127,25 +143,47 @@ class BigEarthNetPatch:
         target_edge_size: int = 120,
         target_bands: typing.Union[str, typing.List[str]] = "BGRNIR",
         target_dtype: np.dtype = np.dtype(np.uint16),
-        norm_meanstddev: typing.Optional[typing.Tuple[int, int]] = None
+        norm_meanstddev: typing.Optional[typing.Tuple[int, int]] = None,
     ) -> np.ndarray:
         """Loads the 3-dim array containing the stacked band data for this patch."""
-        assert isinstance(target_edge_size, int) and target_edge_size > 0, "invalid patch edge size"
+        assert (
+            isinstance(target_edge_size, int) and target_edge_size > 0
+        ), "invalid patch edge size"
         if isinstance(target_bands, str):
-            assert target_bands in sentinel2_band_map, f"invalid target bands code: {target_bands}"
+            assert (
+                target_bands in sentinel2_band_map
+            ), f"invalid target bands code: {target_bands}"
             target_bands = sentinel2_band_map[target_bands]
         assert isinstance(target_bands, list) and len(target_bands) > 0
-        assert all([isinstance(b, str) and b in sentinel2_band_names for b in target_bands])
-        image = np.zeros((len(target_bands), target_edge_size, target_edge_size), dtype=target_dtype)
+        assert all(
+            [isinstance(b, str) and b in sentinel2_band_names for b in target_bands]
+        )
+        image = np.zeros(
+            (len(target_bands), target_edge_size, target_edge_size), dtype=target_dtype
+        )
         for band_idx, band_name in enumerate(target_bands):
             band_path = self.band_paths_map[band_name]
-            assert band_path.suffix == ".tif" and band_path.is_file(), f"invalid file: {band_path}"
-            band = cv.imread(str(band_path), flags=cv.IMREAD_ANYCOLOR | cv.IMREAD_ANYDEPTH)
-            assert band.ndim == 2 and band.shape[0] == band.shape[1] and band.dtype == np.uint16
+            assert (
+                band_path.suffix == ".tif" and band_path.is_file()
+            ), f"invalid file: {band_path}"
+            band = cv.imread(
+                str(band_path), flags=cv.IMREAD_ANYCOLOR | cv.IMREAD_ANYDEPTH
+            )
+            assert (
+                band.ndim == 2
+                and band.shape[0] == band.shape[1]
+                and band.dtype == np.uint16
+            )
             if band.shape[0] != target_edge_size:
-                band = cv.resize(band, (target_edge_size, target_edge_size), interpolation=cv.INTER_CUBIC)
+                band = cv.resize(
+                    band,
+                    (target_edge_size, target_edge_size),
+                    interpolation=cv.INTER_CUBIC,
+                )
             if norm_meanstddev is not None:
-                assert len(norm_meanstddev) == 2 and all([isinstance(v, float) for v in norm_meanstddev])
+                assert len(norm_meanstddev) == 2 and all(
+                    [isinstance(v, float) for v in norm_meanstddev]
+                )
                 band = (band.astype(np.float) - norm_meanstddev[0]) / norm_meanstddev[1]
             if band.dtype != target_dtype:
                 band = band.astype(target_dtype)
@@ -180,10 +218,14 @@ class HubCompactor:
         logger.info(f"loaded metadata for {tot_samples} patches")
         self.classes = classes
         self.class_dist = self._compute_class_dist(self.patches)
-        self.class2idx = {class_:idx for idx, class_ in enumerate(self.classes)}
-        self.idx2class = {idx:class_ for idx, class_ in enumerate(self.classes)}
-        self.class_weights = {cname: len(cidxs) / tot_samples for cname, cidxs in self.class_dist.items()}
-        logger.debug(f"class weights:\n{pprint.PrettyPrinter(indent=2).pformat(self.class_weights)}")
+        self.class2idx = {class_: idx for idx, class_ in enumerate(self.classes)}
+        self.idx2class = {idx: class_ for idx, class_ in enumerate(self.classes)}
+        self.class_weights = {
+            cname: len(cidxs) / tot_samples for cname, cidxs in self.class_dist.items()
+        }
+        logger.debug(
+            f"class weights:\n{pprint.PrettyPrinter(indent=2).pformat(self.class_weights)}"
+        )
 
     @staticmethod
     def _load_patch_metadata(
@@ -193,7 +235,9 @@ class HubCompactor:
     ) -> typing.List[BigEarthNetPatch]:
         assert root.is_dir(), f"invalid big earth net root directory path ({root})"
         patches = []
-        patch_folders = pd.read_csv(split_file, header=None)[0].to_list()  # Each row in the csv is a folder name
+        patch_folders = pd.read_csv(split_file, header=None)[
+            0
+        ].to_list()  # Each row in the csv is a folder name
         patch_folders = [pathlib.Path(os.path.join(root, f)) for f in patch_folders]
         if show_progress_bar:
             patch_folders = tqdm.tqdm(patch_folders, desc="scanning patch folders")
@@ -205,24 +249,38 @@ class HubCompactor:
                     for band_name in sentinel2_band_names
                 }
                 assert all([f.is_file() for f in band_files_map.values()])
-                metadata_file = patch_folder / (patch_folder.name + "_labels_metadata.json")
-                assert metadata_file.is_file(), "unexpected (missing) patch metadata file!"
+                metadata_file = patch_folder / (
+                    patch_folder.name + "_labels_metadata.json"
+                )
+                assert (
+                    metadata_file.is_file()
+                ), "unexpected (missing) patch metadata file!"
                 with open(metadata_file, "r") as fd:
                     patch_metadata = json.load(fd)
-                assert all([k in patch_metadata for k in bigearthnet_metadata_field_names])
-                patch_metadata = {k: patch_metadata[k] for k in bigearthnet_metadata_field_names}
-                assert len(patch_metadata["labels"]) > 0, "patches should have at least one label?"
-                patch_metadata["coordinates"] = {  # convert all coords to float right away
+                assert all(
+                    [k in patch_metadata for k in bigearthnet_metadata_field_names]
+                )
+                patch_metadata = {
+                    k: patch_metadata[k] for k in bigearthnet_metadata_field_names
+                }
+                assert (
+                    len(patch_metadata["labels"]) > 0
+                ), "patches should have at least one label?"
+                patch_metadata[
+                    "coordinates"
+                ] = {  # convert all coords to float right away
                     k: float(v) for k, v in patch_metadata["coordinates"].items()
                 }
                 patch_metadata["patch_folder"] = patch_folder.name
-                patches.append(BigEarthNetPatch(
-                    mission_id=match_res.group(1),
-                    tile_col=int(match_res.group(3)),
-                    tile_row=int(match_res.group(4)),
-                    band_paths_map=band_files_map,
-                    **patch_metadata,
-                ))
+                patches.append(
+                    BigEarthNetPatch(
+                        mission_id=match_res.group(1),
+                        tile_col=int(match_res.group(3)),
+                        tile_row=int(match_res.group(4)),
+                        band_paths_map=band_files_map,
+                        **patch_metadata,
+                    )
+                )
         return patches
 
     @staticmethod
@@ -255,7 +313,9 @@ class HubCompactor:
         form `PROTOCOL://SERVERNAME/DATASETNAME`. Hub will take care of exporting the data during
         the dataset creation.
         """
-        assert pathlib.Path(output_path).suffix == "", "path suffix should be empty (it's a dir!)"
+        assert (
+            pathlib.Path(output_path).suffix == ""
+        ), "path suffix should be empty (it's a dir!)"
         dataset = hub.empty(str(output_path), overwrite=True, **extra_hub_kwargs)
         with dataset:
             # first, export dataset-level metadata using the info attribute...
@@ -291,7 +351,9 @@ class HubCompactor:
                     norm_meanstddev=norm_meanstddev,
                 )
                 dataset["data"].append(patch_data)
-                patch_class_idxs = [self.class2idx[class_name] for class_name in patch.labels]
+                patch_class_idxs = [
+                    self.class2idx[class_name] for class_name in patch.labels
+                ]
                 try:
                     dataset["labels"].append(patch_class_idxs)
                 except Exception as e:
@@ -327,7 +389,7 @@ if __name__ == "__main__":
         download_full_splits(splits_path)
 
     dirpath = os.path.dirname(os.path.abspath(__file__))
-    with open(os.path.join(dirpath, "class_list.json"), 'r') as f:
+    with open(os.path.join(dirpath, "class_list.json"), "r") as f:
         classes = json.load(f)
     for split in ["train", "val", "test"]:
         dataset = HubCompactor(

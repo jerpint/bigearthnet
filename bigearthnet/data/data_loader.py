@@ -27,7 +27,6 @@ class HubDataset(torch.utils.data.dataset.Dataset):
         self.dataset = hub.load(self.dataset_path, read_only=True, **extra_hub_kwargs)
         self.transforms = transforms
 
-
     def __len__(self) -> int:
         """Returns the total size (patch count) of the dataset."""
         return len(self.dataset)
@@ -40,11 +39,13 @@ class HubDataset(torch.utils.data.dataset.Dataset):
         respectively, in order to make sure that PyTorch will be able to batch them.
         Labels are converted to one-hot representation.
         """
-        item = self.dataset[int(idx)]  # cast in case we're using numpy ints or something similar
+        item = self.dataset[
+            int(idx)
+        ]  # cast in case we're using numpy ints or something similar
         assert tuple(self.tensor_names) == ("data", "labels")
 
         labels_idx = item["labels"].numpy()
-        onehot_labels = np.zeros((len(self.class_names), ), dtype=np.int16)
+        onehot_labels = np.zeros((len(self.class_names),), dtype=np.int16)
         onehot_labels[labels_idx] = 1
         labels = torch.tensor(onehot_labels)
 
@@ -125,29 +126,28 @@ class DataModule(pl.LightningDataModule):
         """Downloads/extracts/unpacks the data if needed."""
         pass
 
-
     def setup(self, stage=None) -> None:
         """Parses and splits all samples across the train/valid/test datasets."""
         if stage == "fit" or stage is None:
             if self.train_dataset is None:
                 self.train_dataset = HubDataset(
-                        self.dataset_path / "train",
-                        transforms=self.transforms,
-                        **self._extra_hub_kwargs,
-                        )
+                    self.dataset_path / "train",
+                    transforms=self.transforms,
+                    **self._extra_hub_kwargs,
+                )
             if self.valid_dataset is None:
                 self.valid_dataset = HubDataset(
-                        self.dataset_path / "val",
-                        transforms=self.transforms,
-                        **self._extra_hub_kwargs,
-                        )
+                    self.dataset_path / "val",
+                    transforms=self.transforms,
+                    **self._extra_hub_kwargs,
+                )
         if stage == "test" or stage is None:
             if self.test_dataset is None:
                 self.test_dataset = HubDataset(
-                        self.dataset_path / "test",
-                        transforms=self.transforms,
-                        **self._extra_hub_kwargs,
-                        )
+                    self.dataset_path / "test",
+                    transforms=self.transforms,
+                    **self._extra_hub_kwargs,
+                )
 
     def train_dataloader(self) -> torch.utils.data.dataloader.DataLoader:
         """Creates the training dataloader using the training dataset."""
@@ -158,7 +158,6 @@ class DataModule(pl.LightningDataModule):
             shuffle=True,
             num_workers=self.num_workers,
         )
-
 
     def val_dataloader(self) -> torch.utils.data.dataloader.DataLoader:
         """Creates the validation dataloader using the validation data parser."""
@@ -180,12 +179,12 @@ class DataModule(pl.LightningDataModule):
             num_workers=self.num_workers,
         )
 
+
 def load_transforms(cfg):
     if cfg.get("transforms"):
-        return transforms.Compose(
-                [instantiate(T) for T in cfg.transforms]
-        )
+        return transforms.Compose([instantiate(T) for T in cfg.transforms])
     return None
+
 
 def load_datamodule(cfg):
     transforms = load_transforms(cfg)

@@ -11,6 +11,7 @@ from bigearthnet.data.data_loader import load_datamodule
 
 log = logging.getLogger(__name__)
 
+
 def load_callbacks(cfg):
     all_callbacks = []
 
@@ -60,6 +61,7 @@ def main(cfg: DictConfig):
     trainer.fit(model, datamodule=datamodule)
 
     log.info("Training Done.")
+
 
 if __name__ == "__main__":
     main()
