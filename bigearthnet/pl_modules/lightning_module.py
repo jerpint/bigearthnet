@@ -44,7 +44,6 @@ class LitModel(pl.LightningModule):
         name = self.cfg.optimizer.name
         lr = self.cfg.optimizer.lr
         if name == 'adam':
-            #  optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
             optimizer = optim.Adam(
                     self.model.parameters(),
                     lr=lr,
