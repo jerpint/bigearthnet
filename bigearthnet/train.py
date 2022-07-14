@@ -3,7 +3,7 @@ import logging
 import hydra
 from omegaconf import DictConfig, OmegaConf
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks import ModelCheckpoint, DeviceStatsMonitor
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
 from bigearthnet.pl_modules.lightning_module import LitModel
@@ -29,6 +29,9 @@ def load_callbacks(cfg):
         filename="best-model-{epoch:02d}-{val_loss:.2f}",
     )
     callbacks.append(best_model_checkpoint)
+
+    device_stats_monitor = DeviceStatsMonitor()
+    callbacks.append(device_stats_monitor)
 
     return callbacks
 
