@@ -107,7 +107,6 @@ class LitModel(pl.LightningModule):
     def training_epoch_end(self, training_step_outputs):
         metrics = self._generic_epoch_end(training_step_outputs)
         self.log_metrics(metrics, split="train")
-        # TODO: log this to tensorboard
 
     def validation_step(self, batch, batch_idx):
         """Runs a prediction step for validation, logging the loss."""
