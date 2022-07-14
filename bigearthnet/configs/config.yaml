@@ -27,8 +27,9 @@ logger:
   name: "bigearth"
 
 monitor:
-  name: "precision"
-  mode: "max"
+  name: "loss"
+  mode: "min"
+  patience: 5
 
 trainer:
   max_epochs: 5

@@ -23,15 +23,16 @@ class LitModel(pl.LightningModule):
 
     def on_train_start(self):
         mode = self.cfg.monitor.mode
+        assert mode in ["min", "max"]
         name = self.cfg.monitor.name
+        assert name in ["loss", "precision", "recall", "f1_score"]
         init_metrics = {
-            "best_metrics/loss": 99990,
+            "best_metrics/loss": 99999,
             "best_metrics/precision": 0,
             "best_metrics/recall": 0,
             "best_metrics/f1_score": 0,
         }
 
-        assert mode in ["min", "max"]
         self.logger.log_hyperparams(
                 self.cfg,
                 metrics=init_metrics)
@@ -43,7 +44,6 @@ class LitModel(pl.LightningModule):
         name = self.cfg.optimizer.name
         lr = self.cfg.optimizer.lr
         if name == 'adam':
-            #  optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
             optimizer = optim.Adam(
                     self.model.parameters(),
                     lr=lr,
@@ -106,7 +106,6 @@ class LitModel(pl.LightningModule):
     def training_epoch_end(self, training_step_outputs):
         metrics = self._generic_epoch_end(training_step_outputs)
         self.log_metrics(metrics, split="train")
-        # TODO: log this to tensorboard
 
     def validation_step(self, batch, batch_idx):
         """Runs a prediction step for validation, logging the loss."""
@@ -141,6 +140,7 @@ class LitModel(pl.LightningModule):
                     metrics={f"best_metrics/{k}": metrics[k] for k in ["loss", "precision", "recall", "f1_score"]}
             )
             self.best_metric = metrics[name]
+
     def validation_epoch_end(self, validation_step_outputs):
         if not self.trainer.sanity_checking:
             metrics = self._generic_epoch_end(validation_step_outputs)
