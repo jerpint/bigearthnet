@@ -30,9 +30,6 @@ def load_callbacks(cfg):
     )
     callbacks.append(best_model_checkpoint)
 
-    device_stats_monitor = DeviceStatsMonitor()
-    callbacks.append(device_stats_monitor)
-
     return callbacks
 
 
