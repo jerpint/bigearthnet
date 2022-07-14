@@ -21,6 +21,7 @@ setup(
         'timm',
         'pytorch_lightning==1.6.4',
         'torch==1.11',
+        'torch_tb_profiler',
         'tqdm',
     ],
 )
