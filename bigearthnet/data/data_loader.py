@@ -1,7 +1,11 @@
 import logging
+import os
 import pathlib
 import typing
+import tarfile
 
+
+import gdown
 import hub
 import numpy as np
 import pytorch_lightning as pl
@@ -11,6 +15,11 @@ from hydra.utils import instantiate
 from torchvision import transforms
 
 logger = logging.getLogger(__name__)
+
+DRIVE_URLS = {
+    "bigearthnet-mini": "https://drive.google.com/file/d/16ExAp-dqDvfvZ1KU6R_6k4Xjb-hhcHTN/view?usp=sharing",
+    "bigearthnet-medium": "https://drive.google.com/file/d/1GiVUf7eGE0Nk-Q_1PVdqpT6M-bmrkrXH/view?usp=sharing",
+}
 
 
 class HubDataset(torch.utils.data.dataset.Dataset):
@@ -107,7 +116,8 @@ class DataModule(pl.LightningDataModule):
 
     def __init__(
         self,
-        dataset_path: str,
+        dataset_dir: str,
+        dataset_name: str,
         batch_size: int,
         num_workers: int = 0,
         transforms=None,
@@ -115,16 +125,49 @@ class DataModule(pl.LightningDataModule):
     ):
         """Validates the hyperparameter config dictionary and sets up internal attributes."""
         super().__init__()
-        self.dataset_path = pathlib.Path(dataset_path)
+        self.dataset_name = dataset_name
+        self.dataset_dir = pathlib.Path(dataset_dir)
+        self.dataset_path = pathlib.Path(os.path.join(dataset_dir, dataset_name))
         self.batch_size = batch_size
         self.num_workers = num_workers
         self._extra_hub_kwargs = extra_hub_kwargs
         self.train_dataset, self.valid_dataset, self.test_dataset = None, None, None
         self.transforms = transforms
 
-    def prepare_data(self):
+        self.download_data()
+
+    def download_data(self):
         """Downloads/extracts/unpacks the data if needed."""
-        pass
+        if os.path.isdir(self.dataset_path):
+            logger.info(
+                f"Dataset already present at {self.dataset_path}, skipping download."
+            )
+            return
+
+        if not os.path.isdir(self.dataset_dir):
+            os.mkdir(self.dataset_dir)
+        logger.info(
+            f"Downloading {self.dataset_name} dataset to {str(self.dataset_dir.resolve())}"
+        )
+
+        # download from gdrive
+        url = DRIVE_URLS[self.dataset_name]
+        tar_output = pathlib.Path(
+            os.path.join(self.dataset_dir, self.dataset_name + ".tar")
+        )
+        gdown.download(url, str(tar_output), fuzzy=True)
+
+        # extract tar
+        try:
+            with tarfile.open(str(tar_output), "r") as tar:
+                tar.extractall(path=str(self.dataset_dir), members=tar)
+            os.remove(tar_output)
+        except tarfile.ExtractError:
+            logger.info("tar extraction failed.")
+
+        logger.info(
+            f"Succesfully downloaded and extracted {self.dataset_name} to {self.dataset_path}."
+        )
 
     def setup(self, stage=None) -> None:
         """Parses and splits all samples across the train/valid/test datasets."""
