@@ -9,7 +9,7 @@ setup(
     install_requires=[
         "flake8",
         "flake8-docstrings",
-        "gdrive",
+        "gdown",
         "gitpython",
         "hub",
         "hydra-core",
