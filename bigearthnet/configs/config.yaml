@@ -1,5 +1,6 @@
 datamodule:
-  dataset_path: "${oc.env:HOME}/bigearthnet/bigearthnet/data/bigearthnet-mini/"
+  dataset_dir: "${oc.env:HOME}/bigearthnet/bigearthnet/datasets/"
+  dataset_name: "bigearthnet-mini"
   batch_size: 16
   num_workers: 0
 

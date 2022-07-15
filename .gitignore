@@ -2,6 +2,7 @@
 
 lightning_logs/
 outputs/
+.DS_Store
 
 bigearthnet/data/bigearthnet-mini/
 bigearthnet/data/bigearthnet-medium/
