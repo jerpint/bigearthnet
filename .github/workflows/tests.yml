@@ -26,4 +26,5 @@ jobs:
           pip install -e .
       - name: end_to_end
         run: |
+          cd bigearthnet
           python train.py
