@@ -24,8 +24,6 @@ setup(
         "tqdm",
     ],
     extras_require={
-        "dev": [
-            "opencv-python"
-        ],
-    }
+        "dev": ["opencv-python"],
+    },
 )
