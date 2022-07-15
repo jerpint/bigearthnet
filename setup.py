@@ -7,22 +7,25 @@ setup(
     packages=find_packages(include=["bigearthnet", "bigearthnet.*"]),
     python_requires=">=3.8",
     install_requires=[
-        "flake8",
-        "flake8-docstrings",
         "gdown",
         "gitpython",
         "hub",
         "hydra-core",
         "tqdm",
         "jupyter",
-        "opencv-python",
         "pyyaml>=5.3",
         "pytest>=4.6",
         "pytest-cov",
-        "timm",
         "pytorch_lightning==1.6.4",
+        "sklearn",
+        "timm",
         "torch==1.11",
         "torch_tb_profiler",
         "tqdm",
     ],
+    extras_require={
+        "dev": [
+            "opencv-python"
+        ],
+    }
 )
