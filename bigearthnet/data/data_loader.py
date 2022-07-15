@@ -147,7 +147,7 @@ class DataModule(pl.LightningDataModule):
         if not os.path.isdir(self.dataset_dir):
             os.mkdir(self.dataset_dir)
         logger.info(
-            f"Downloading {self.dataset_name} dataset to {str(self.dataset_dir)}"
+            f"Downloading {self.dataset_name} dataset to {str(self.dataset_dir.resolve())}"
         )
 
         # download from gdrive
