@@ -142,7 +142,6 @@ class LitModel(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         """Runs a prediction step for testing, logging the loss."""
         outputs = self._generic_step(batch, batch_idx)
-        self.log("test_loss", outputs["loss"])
         return outputs
 
     def test_epoch_end(self, test_step_outputs):
