@@ -1,4 +1,5 @@
 import logging
+import pathlib
 
 import hydra
 import pytorch_lightning as pl
@@ -60,8 +61,8 @@ def main(cfg: DictConfig):
     trainer.fit(model, datamodule=datamodule)
     log.info("Training Done.")
 
-    log.info("Evaluating on Test set:")
-    trainer.test(ckpt_path="best", datamodule=datamodule)
+    ckpt_path = str(list(pathlib.Path(".").rglob("best-model*.ckpt"))[0].resolve())
+    trainer.test(ckpt_path=ckpt_path, datamodule=datamodule)
     log.info("Test evaluation Done.")
 
 
