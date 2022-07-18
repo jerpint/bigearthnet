@@ -1,2 +1,3 @@
 _target_: bigearthnet.models.baseline.Baseline
 num_classes: 43
+hidden_dim: 256
