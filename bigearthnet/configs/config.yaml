@@ -13,6 +13,8 @@ logger:
   name: "bigearthnet"
 
 monitor:
+  # Keeps track of this value (from validation set) 
+  # to determine when to do model selection, patience, etc. 
   name: "loss"
   mode: "min"
   patience: 5
