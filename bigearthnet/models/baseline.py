@@ -15,7 +15,8 @@ class Baseline(torch.nn.Module):  # pragma: no cover
 
     def __init__(
         self,
-        num_classes,
+        num_classes: int,
+        hidden_dim: int,
     ):
         """__init__.
 
@@ -37,11 +38,11 @@ class Baseline(torch.nn.Module):  # pragma: no cover
         self.flatten = nn.Flatten()
         self.mlp_layers = nn.Sequential(
             nn.Linear(
-                9216, 256
+                9216, hidden_dim,
             ),  # The input size for the linear layer is determined by the previous operations
             nn.ReLU(),
             nn.Linear(
-                256, num_classes
+                hidden_dim, num_classes
             ),  # Here we get exactly num_classes logits at the output
         )
 
