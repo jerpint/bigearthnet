@@ -9,15 +9,16 @@ optimizer:
   lr: 0.0001
 
 logger:
-  save_dir: "../../tb_logs/"
-  name: "bigearthnet"
+  save_dir: "."
+  name: ${datamodule.dataset_name}
+  version: ${model.model_name}
 
 monitor:
   # Keeps track of this value (from validation set) 
   # to determine when to do model selection, patience, etc. 
   name: "loss"
   mode: "min"
-  patience: 5
+  patience: 10
 
 trainer:
   max_epochs: 5

@@ -17,6 +17,7 @@ class Baseline(torch.nn.Module):  # pragma: no cover
         self,
         num_classes: int,
         hidden_dim: int,
+        model_name: str,
     ):
         """__init__.
 
@@ -24,6 +25,7 @@ class Baseline(torch.nn.Module):  # pragma: no cover
             hyper_params (dict): hyper parameters from the config file.
         """
         super(Baseline, self).__init__()
+        self.model_name = model_name
         self.conv_layers = nn.Sequential(
             nn.Conv2d(3, 32, 5),
             nn.ReLU(),
