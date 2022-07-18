@@ -3,7 +3,6 @@ import logging
 import hydra
 import pytorch_lightning as pl
 from omegaconf import DictConfig, OmegaConf
-from pytorch_lightning import Trainer, callbacks
 from pytorch_lightning.loggers import TensorBoardLogger
 
 from bigearthnet.data.data_loader import load_datamodule
@@ -13,32 +12,32 @@ log = logging.getLogger(__name__)
 
 
 def load_callbacks(cfg):
-    all_callbacks = []
+    callbacks = []
 
-    last_model_checkpoint = callbacks.ModelCheckpoint(
+    last_model_checkpoint = pl.callbacks.ModelCheckpoint(
         save_top_k=1,
         monitor="step",
         mode="max",
         filename="last-model",
     )
-    all_callbacks.append(last_model_checkpoint)
+    callbacks.append(last_model_checkpoint)
 
-    best_model_checkpoint = callbacks.ModelCheckpoint(
+    best_model_checkpoint = pl.callbacks.ModelCheckpoint(
         save_top_k=1,
         monitor=f"{cfg.monitor.name}/val",
         mode=cfg.monitor.mode,
         filename="best-model-{epoch:02d}-{step:02d}",
     )
-    all_callbacks.append(best_model_checkpoint)
+    callbacks.append(best_model_checkpoint)
 
-    early_stopping = callbacks.EarlyStopping(
+    early_stopping = pl.callbacks.EarlyStopping(
         monitor=f"{cfg.monitor.name}/val",
         mode=cfg.monitor.mode,
         patience=cfg.monitor.patience,
     )
-    all_callbacks.append(early_stopping)
+    callbacks.append(early_stopping)
 
-    return all_callbacks
+    return callbacks
 
 
 @hydra.main(config_path="configs", config_name="config")
