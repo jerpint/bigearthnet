@@ -171,26 +171,24 @@ class DataModule(pl.LightningDataModule):
 
     def setup(self, stage=None) -> None:
         """Parses and splits all samples across the train/valid/test datasets."""
-        if stage == "fit" or stage is None:
-            if self.train_dataset is None:
-                self.train_dataset = HubDataset(
-                    self.dataset_path / "train",
-                    transforms=self.transforms,
-                    **self._extra_hub_kwargs,
-                )
-            if self.valid_dataset is None:
-                self.valid_dataset = HubDataset(
-                    self.dataset_path / "val",
-                    transforms=self.transforms,
-                    **self._extra_hub_kwargs,
-                )
-        if stage == "test" or stage is None:
-            if self.test_dataset is None:
-                self.test_dataset = HubDataset(
-                    self.dataset_path / "test",
-                    transforms=self.transforms,
-                    **self._extra_hub_kwargs,
-                )
+        if self.train_dataset is None:
+            self.train_dataset = HubDataset(
+                self.dataset_path / "train",
+                transforms=self.transforms,
+                **self._extra_hub_kwargs,
+            )
+        if self.valid_dataset is None:
+            self.valid_dataset = HubDataset(
+                self.dataset_path / "val",
+                transforms=self.transforms,
+                **self._extra_hub_kwargs,
+            )
+        if self.test_dataset is None:
+            self.test_dataset = HubDataset(
+                self.dataset_path / "test",
+                transforms=self.transforms,
+                **self._extra_hub_kwargs,
+            )
 
     def train_dataloader(self) -> torch.utils.data.dataloader.DataLoader:
         """Creates the training dataloader using the training dataset."""
@@ -234,20 +232,3 @@ def load_datamodule(cfg):
     data_module = DataModule(transforms=transforms, **cfg.datamodule)
     data_module.setup()
     return data_module
-
-
-if __name__ == "__main__":
-    # TODO: Put this as a test instead
-    logging.basicConfig()
-    logging.getLogger().setLevel(logging.NOTSET)
-
-    hub_dataset_path = pathlib.Path("./debug_dataset/hub_dataset/")
-    dm = load_datamodule(hub_dataset_path, batch_size=16)
-
-    train_data_loader = dm.train_dataloader()
-    assert len(train_data_loader) > 0
-    minibatch = next(iter(train_data_loader))
-    assert "data" in minibatch and len(minibatch["data"]) <= 16
-    assert "labels" in minibatch and len(minibatch["labels"]) <= 16
-    assert minibatch["labels"].shape[1] == 43
-    print("all done")

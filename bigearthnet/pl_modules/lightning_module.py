@@ -15,20 +15,20 @@ log = logging.getLogger(__name__)
 
 
 class LitModel(pl.LightningModule):
-    """Base class for Pytorch Lightning model - useful to reuse the same *_step methods."""
+    """Base class for Pytorch Lightning model."""
 
     def __init__(self, cfg):
         super().__init__()
         self.cfg = cfg
-
         self.model = instantiate(cfg.model)
         self.loss_fn = torch.nn.BCEWithLogitsLoss()
 
     def on_train_start(self):
         mode = self.cfg.monitor.mode
-        assert mode in ["min", "max"]
         name = self.cfg.monitor.name
+        assert mode in ["min", "max"]
         assert name in ["loss", "precision", "recall", "f1_score"]
+        # initial metrics before training
         init_metrics = {
             "best_metrics/loss": 99999,
             "best_metrics/precision": 0,
@@ -40,8 +40,12 @@ class LitModel(pl.LightningModule):
 
         self.best_metric = init_metrics[f"best_metrics/{name}"]
 
-    def configure_optimizers(self):
+        # get the classes
+        self.class_names: typing.List = (
+            self.trainer.train_dataloader.dataset.datasets.class_names
+        )
 
+    def configure_optimizers(self):
         name = self.cfg.optimizer.name
         lr = self.cfg.optimizer.lr
         if name == "adam":
@@ -65,8 +69,6 @@ class LitModel(pl.LightningModule):
 
     def _generic_epoch_end(self, step_outputs):
 
-        class_names = self.trainer.train_dataloader.dataset.datasets.class_names
-
         all_targets = []
         all_preds = []
         all_loss = []
@@ -86,7 +88,7 @@ class LitModel(pl.LightningModule):
         avg_loss = sum(all_loss) / len(all_loss)
         conf_mats = multilabel_confusion_matrix(y_true=all_targets, y_pred=all_preds)
         report = classification_report(
-            y_true=all_targets, y_pred=all_preds, target_names=class_names
+            y_true=all_targets, y_pred=all_preds, target_names=self.class_names
         )
 
         metrics = {
@@ -129,6 +131,22 @@ class LitModel(pl.LightningModule):
         )
         return outputs
 
+    def validation_epoch_end(self, validation_step_outputs):
+        if not self.trainer.sanity_checking:
+            metrics = self._generic_epoch_end(validation_step_outputs)
+            self.log_metrics(metrics, split="val")
+            self.update_best_metric(metrics)
+
+    def test_step(self, batch, batch_idx):
+        """Runs a prediction step for testing, logging the loss."""
+        outputs = self._generic_step(batch, batch_idx)
+        self.log("test_loss", outputs["loss"])
+        return outputs
+
+    def test_epoch_end(self, test_step_outputs):
+        metrics = self._generic_epoch_end(test_step_outputs)
+        self.log_metrics(metrics, split="test")
+
     def log_metrics(self, metrics: typing.Dict, split: str):
         # log to tensorboard
         self.log(f"precision/{split}", metrics["precision"], on_epoch=True)
@@ -158,14 +176,3 @@ class LitModel(pl.LightningModule):
                 },
             )
             self.best_metric = metrics[name]
-
-    def validation_epoch_end(self, validation_step_outputs):
-        if not self.trainer.sanity_checking:
-            metrics = self._generic_epoch_end(validation_step_outputs)
-            self.log_metrics(metrics, split="val")
-            self.update_best_metric(metrics)
-
-    def test_step(self, batch, batch_idx):
-        """Runs a prediction step for testing, logging the loss."""
-        outputs = self._generic_step(batch, batch_idx)
-        self.log("test_loss", outputs["loss"])
