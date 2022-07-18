@@ -1,10 +1,12 @@
 import logging
 import typing
 
+import matplotlib.pyplot as plt
 import pytorch_lightning as pl
 import torch
 from hydra.utils import instantiate
 from sklearn.metrics import (
+    ConfusionMatrixDisplay,
     classification_report,
     multilabel_confusion_matrix,
     precision_recall_fscore_support,
@@ -155,8 +157,29 @@ class LitModel(pl.LightningModule):
 
         # add to logs
         log.info(f"{split} epoch: {self.current_epoch}")
-        log.info(f"{split} Conf mats:\n{metrics['conf_mats']}")
         log.info(f"{split} classification report:\n{metrics['report']}")
+
+        # Here we log the confusion matrices in the logs as well as images in tensorboard
+        conf_mats = metrics["conf_mats"]
+        conf_mat_log = f"{split} Confusion matrices:\n:"
+        fig, axs = plt.subplots(9, 5, figsize=(12, 15))
+        [ax.set_axis_off() for ax in axs.ravel()]
+        for cm, label, ax in zip(conf_mats, self.class_names, axs.ravel()):
+            # add to log
+            conf_mat_log += f"\n{label}\n{cm}\n"
+
+            # add to figure
+            disp = ConfusionMatrixDisplay(
+                confusion_matrix=cm,
+            )
+            disp.plot(ax=ax, colorbar=False)
+            ax.title.set_text(label[0:20])  # text cutoff
+
+        self.logger.experiment.add_figure(
+            f"confusion matrix/{split}", fig, self.global_step
+        )
+        log.info(conf_mat_log)
+        plt.close(fig)
 
     def update_best_metric(self, metrics):
         """Update the best scoring metric for parallel coordinate plots."""
