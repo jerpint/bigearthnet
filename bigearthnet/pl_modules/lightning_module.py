@@ -15,20 +15,20 @@ log = logging.getLogger(__name__)
 
 
 class LitModel(pl.LightningModule):
-    """Base class for Pytorch Lightning model - useful to reuse the same *_step methods."""
+    """Base class for Pytorch Lightning model."""
 
     def __init__(self, cfg):
         super().__init__()
         self.cfg = cfg
-
         self.model = instantiate(cfg.model)
         self.loss_fn = torch.nn.BCEWithLogitsLoss()
 
     def on_train_start(self):
         mode = self.cfg.monitor.mode
-        assert mode in ["min", "max"]
         name = self.cfg.monitor.name
+        assert mode in ["min", "max"]
         assert name in ["loss", "precision", "recall", "f1_score"]
+        # initial metrics before training
         init_metrics = {
             "best_metrics/loss": 99999,
             "best_metrics/precision": 0,
@@ -41,7 +41,6 @@ class LitModel(pl.LightningModule):
         self.best_metric = init_metrics[f"best_metrics/{name}"]
 
     def configure_optimizers(self):
-
         name = self.cfg.optimizer.name
         lr = self.cfg.optimizer.lr
         if name == "adam":
@@ -64,7 +63,7 @@ class LitModel(pl.LightningModule):
         return {"loss": loss, "targets": targets, "logits": logits}
 
     def _generic_epoch_end(self, step_outputs):
-
+        # the 43 classes
         class_names = self.trainer.train_dataloader.dataset.datasets.class_names
 
         all_targets = []

@@ -234,20 +234,3 @@ def load_datamodule(cfg):
     data_module = DataModule(transforms=transforms, **cfg.datamodule)
     data_module.setup()
     return data_module
-
-
-if __name__ == "__main__":
-    # TODO: Put this as a test instead
-    logging.basicConfig()
-    logging.getLogger().setLevel(logging.NOTSET)
-
-    hub_dataset_path = pathlib.Path("./debug_dataset/hub_dataset/")
-    dm = load_datamodule(hub_dataset_path, batch_size=16)
-
-    train_data_loader = dm.train_dataloader()
-    assert len(train_data_loader) > 0
-    minibatch = next(iter(train_data_loader))
-    assert "data" in minibatch and len(minibatch["data"]) <= 16
-    assert "labels" in minibatch and len(minibatch["labels"]) <= 16
-    assert minibatch["labels"].shape[1] == 43
-    print("all done")
