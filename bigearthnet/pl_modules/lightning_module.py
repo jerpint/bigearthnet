@@ -155,8 +155,12 @@ class LitModel(pl.LightningModule):
 
         # add to logs
         log.info(f"{split} epoch: {self.current_epoch}")
-        log.info(f"{split} Conf mats:\n{metrics['conf_mats']}")
         log.info(f"{split} classification report:\n{metrics['report']}")
+
+        conf_mat_log = f"{split} Confusion matrices:\n:"
+        for conf_mat, label in zip(metrics["conf_mats"], self.class_names):
+            conf_mat_log += f"\n{label}\n{conf_mat}\n"
+        log.info(conf_mat_log)
 
     def update_best_metric(self, metrics):
         """Update the best scoring metric for parallel coordinate plots."""
