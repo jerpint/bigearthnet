@@ -58,8 +58,11 @@ def main(cfg: DictConfig):
     # do the training
     trainer = pl.Trainer(**cfg.trainer, callbacks=callbacks, logger=logger)
     trainer.fit(model, datamodule=datamodule)
-
     log.info("Training Done.")
+
+    log.info("Evaluating on Test set:")
+    trainer.test(ckpt_path="best", datamodule=datamodule)
+    log.info("Test evaluation Done.")
 
 
 if __name__ == "__main__":

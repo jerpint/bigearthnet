@@ -171,26 +171,24 @@ class DataModule(pl.LightningDataModule):
 
     def setup(self, stage=None) -> None:
         """Parses and splits all samples across the train/valid/test datasets."""
-        if stage == "fit" or stage is None:
-            if self.train_dataset is None:
-                self.train_dataset = HubDataset(
-                    self.dataset_path / "train",
-                    transforms=self.transforms,
-                    **self._extra_hub_kwargs,
-                )
-            if self.valid_dataset is None:
-                self.valid_dataset = HubDataset(
-                    self.dataset_path / "val",
-                    transforms=self.transforms,
-                    **self._extra_hub_kwargs,
-                )
-        if stage == "test" or stage is None:
-            if self.test_dataset is None:
-                self.test_dataset = HubDataset(
-                    self.dataset_path / "test",
-                    transforms=self.transforms,
-                    **self._extra_hub_kwargs,
-                )
+        if self.train_dataset is None:
+            self.train_dataset = HubDataset(
+                self.dataset_path / "train",
+                transforms=self.transforms,
+                **self._extra_hub_kwargs,
+            )
+        if self.valid_dataset is None:
+            self.valid_dataset = HubDataset(
+                self.dataset_path / "val",
+                transforms=self.transforms,
+                **self._extra_hub_kwargs,
+            )
+        if self.test_dataset is None:
+            self.test_dataset = HubDataset(
+                self.dataset_path / "test",
+                transforms=self.transforms,
+                **self._extra_hub_kwargs,
+            )
 
     def train_dataloader(self) -> torch.utils.data.dataloader.DataLoader:
         """Creates the training dataloader using the training dataset."""
