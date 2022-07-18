@@ -38,7 +38,8 @@ class Baseline(torch.nn.Module):  # pragma: no cover
         self.flatten = nn.Flatten()
         self.mlp_layers = nn.Sequential(
             nn.Linear(
-                9216, hidden_dim,
+                9216,
+                hidden_dim,
             ),  # The input size for the linear layer is determined by the previous operations
             nn.ReLU(),
             nn.Linear(

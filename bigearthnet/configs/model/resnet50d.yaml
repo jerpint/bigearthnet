@@ -1,4 +1,4 @@
 _target_: timm.create_model
-model_name: resnet50d
+model_name:   vit_base_patch16_224  # resnet50d
 num_classes: 43
 pretrained: true
