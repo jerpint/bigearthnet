@@ -23,7 +23,28 @@ monitor:
   mode: "min"
   patience: 10
 
+callbacks:
+  # Checkpoints last model, best model (based on value monitored)
+  # and terminates after patience epochs. 
+  - _target_: pytorch_lightning.callbacks.ModelCheckpoint
+    save_top_k: 1
+    monitor: "step"
+    mode: "max"
+    filename: "last-model"
+  - _target_: pytorch_lightning.callbacks.ModelCheckpoint
+    save_top_k: 1
+    monitor: ${monitor.name}/val
+    mode:  ${monitor.mode}
+    filename: "best-model-{epoch:02d}-{step:02d}"
+  - _target_: pytorch_lightning.callbacks.EarlyStopping
+    monitor: ${monitor.name}/val
+    mode:  ${monitor.mode}
+    patience: ${monitor.patience}
+
 trainer:
+  _target_: pytorch_lightning.Trainer
+  callbacks: ${callbacks}
+  logger: ${logger}
   max_epochs: 5
   profiler: "pytorch"
 

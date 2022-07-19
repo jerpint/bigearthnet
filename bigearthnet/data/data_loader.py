@@ -12,7 +12,6 @@ import pytorch_lightning as pl
 import torch.utils.data.dataloader
 import torch.utils.data.dataset
 from hydra.utils import instantiate
-from torchvision import transforms
 
 logger = logging.getLogger(__name__)
 
@@ -219,9 +218,3 @@ class DataModule(pl.LightningDataModule):
             shuffle=False,
             num_workers=self.num_workers,
         )
-
-
-def load_datamodule(cfg):
-    data_module = instantiate(cfg.datamodule)
-    data_module.setup()
-    return data_module
