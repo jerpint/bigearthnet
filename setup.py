@@ -10,7 +10,7 @@ setup(
         "gdown",
         "gitpython",
         "hub",
-        "hydra-core",
+        "hydra-core>=1.2",
         "jupyter",
         "matplotlib",
         "pyyaml>=5.3",
