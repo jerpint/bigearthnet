@@ -32,15 +32,15 @@ class LitModel(pl.LightningModule):
         assert name in ["loss", "precision", "recall", "f1_score"]
         # initial metrics before training
         init_metrics = {
-            "best_metrics/loss": 99999,
-            "best_metrics/precision": 0,
-            "best_metrics/recall": 0,
-            "best_metrics/f1_score": 0,
+            "val_best_metrics/loss": 99999,
+            "val_best_metrics/precision": 0,
+            "val_best_metrics/recall": 0,
+            "val_best_metrics/f1_score": 0,
         }
 
         self.logger.log_hyperparams(self.cfg, metrics=init_metrics)
 
-        self.best_metric = init_metrics[f"best_metrics/{name}"]
+        self.val_best_metric = init_metrics[f"val_best_metrics/{name}"]
 
         # get the classes
         self.class_names: typing.List = (
@@ -140,7 +140,7 @@ class LitModel(pl.LightningModule):
             self.update_best_metric(metrics)
 
     def test_step(self, batch, batch_idx):
-        """Runs a prediction step for testing, logging the loss."""
+        """Runs a predictionval_ step for testing, logging the loss."""
         outputs = self._generic_step(batch, batch_idx)
         return outputs
 
@@ -185,16 +185,16 @@ class LitModel(pl.LightningModule):
         mode = self.cfg.monitor.mode
         name = self.cfg.monitor.name
         update = False
-        if mode == "min" and metrics[name] < self.best_metric:
+        if mode == "min" and metrics[name] < self.val_best_metric:
             update = True
-        if mode == "max" and metrics[name] > self.best_metric:
+        if mode == "max" and metrics[name] > self.val_best_metric:
             update = True
         if update:
             self.logger.log_hyperparams(
                 self.cfg,
                 metrics={
-                    f"best_metrics/{k}": metrics[k]
+                    f"val_best_metrics/{k}": metrics[k]
                     for k in ["loss", "precision", "recall", "f1_score"]
                 },
             )
-            self.best_metric = metrics[name]
+            self.val_best_metric = metrics[name]
