@@ -25,6 +25,19 @@ class LitModel(pl.LightningModule):
         self.model = instantiate(cfg.model)
         self.loss_fn = torch.nn.BCEWithLogitsLoss()
 
+    @staticmethod
+    def extract_hparams(cfg) -> typing.Dict:
+        """Select which of the config params to log in logger."""
+        hparams = {
+            "optimizer": cfg.optimizer,
+            "transforms": cfg.transforms.description,
+            "datamodule": {
+                k: cfg.datamodule[k] for k in ["batch_size", "dataset_name"]
+            },
+            "model": cfg.model,
+        }
+        return hparams
+
     def on_train_start(self):
         mode = self.cfg.monitor.mode
         name = self.cfg.monitor.name
@@ -38,7 +51,9 @@ class LitModel(pl.LightningModule):
             "val_best_metrics/f1_score": 0,
         }
 
-        self.logger.log_hyperparams(self.cfg, metrics=init_metrics)
+        self.logger.log_hyperparams(
+            self.extract_hparams(self.cfg), metrics=init_metrics
+        )
 
         self.val_best_metric = init_metrics[f"val_best_metrics/{name}"]
 
@@ -192,7 +207,7 @@ class LitModel(pl.LightningModule):
             update = True
         if update:
             self.logger.log_hyperparams(
-                self.cfg,
+                self.extract_hparams(self.cfg),
                 metrics={
                     f"val_best_metrics/{k}": metrics[k]
                     for k in ["loss", "precision", "recall", "f1_score"]
