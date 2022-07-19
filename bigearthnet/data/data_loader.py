@@ -119,7 +119,6 @@ class DataModule(pl.LightningDataModule):
         batch_size: int,
         num_workers: int = 0,
         transforms=None,
-        **extra_hub_kwargs,
     ):
         """Validates the hyperparameter config dictionary and sets up internal attributes."""
         super().__init__()
@@ -128,7 +127,6 @@ class DataModule(pl.LightningDataModule):
         self.dataset_path = pathlib.Path(os.path.join(dataset_dir, dataset_name))
         self.batch_size = batch_size
         self.num_workers = num_workers
-        self._extra_hub_kwargs = extra_hub_kwargs
         self.train_dataset, self.valid_dataset, self.test_dataset = None, None, None
         self.transforms = transforms
 
@@ -173,19 +171,16 @@ class DataModule(pl.LightningDataModule):
             self.train_dataset = HubDataset(
                 self.dataset_path / "train",
                 transforms=self.transforms,
-                **self._extra_hub_kwargs,
             )
         if self.valid_dataset is None:
             self.valid_dataset = HubDataset(
                 self.dataset_path / "val",
                 transforms=self.transforms,
-                **self._extra_hub_kwargs,
             )
         if self.test_dataset is None:
             self.test_dataset = HubDataset(
                 self.dataset_path / "test",
                 transforms=self.transforms,
-                **self._extra_hub_kwargs,
             )
 
     def train_dataloader(self) -> torch.utils.data.dataloader.DataLoader:
