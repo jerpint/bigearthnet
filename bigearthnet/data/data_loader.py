@@ -221,14 +221,7 @@ class DataModule(pl.LightningDataModule):
         )
 
 
-def load_transforms(cfg):
-    if cfg.get("transforms"):
-        return transforms.Compose([instantiate(T) for T in cfg.transforms])
-    return None
-
-
 def load_datamodule(cfg):
-    transforms = load_transforms(cfg)
-    data_module = DataModule(transforms=transforms, **cfg.datamodule)
+    data_module = instantiate(cfg.datamodule)
     data_module.setup()
     return data_module

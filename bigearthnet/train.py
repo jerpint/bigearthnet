@@ -2,6 +2,7 @@ import logging
 import pathlib
 
 import hydra
+from hydra.utils import instantiate
 import pytorch_lightning as pl
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.loggers import TensorBoardLogger
@@ -52,9 +53,10 @@ def main(cfg: DictConfig):
 
     # data setup
     model = LitModel(cfg)
-    datamodule = load_datamodule(cfg)
+    datamodule = instantiate(cfg.datamodule)
+    datamodule.setup()
     callbacks = load_callbacks(cfg)
-    logger = TensorBoardLogger(**cfg.logger)
+    logger = instantiate(cfg.logger)
 
     # do the training
     trainer = pl.Trainer(**cfg.trainer, callbacks=callbacks, logger=logger)

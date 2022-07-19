@@ -1,14 +1,17 @@
 datamodule:
+  _target_: bigearthnet.data.data_loader.DataModule
   dataset_dir: "${oc.env:HOME}/bigearthnet/bigearthnet/datasets/"
   dataset_name: "bigearthnet-mini"
   batch_size: 16
   num_workers: 0
+  transforms: ${transforms}
 
 optimizer:
   name: 'adam'  # adam or sgd
   lr: 0.0001
 
 logger:
+  _target_: pytorch_lightning.loggers.TensorBoardLogger
   save_dir: "."
   name: ${datamodule.dataset_name}
   version: ${model.model_name}
