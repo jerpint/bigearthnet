@@ -18,6 +18,7 @@ class Baseline(torch.nn.Module):  # pragma: no cover
         num_classes: int,
         hidden_dim: int,
         model_name: str,
+        pretrained: bool,
     ):
         """__init__.
 
@@ -48,6 +49,7 @@ class Baseline(torch.nn.Module):  # pragma: no cover
                 hidden_dim, num_classes
             ),  # Here we get exactly num_classes logits at the output
         )
+        assert pretrained is False, "No pretrained models exist for the baseline"
 
     def forward(self, x):
         x = self.conv_layers(x)

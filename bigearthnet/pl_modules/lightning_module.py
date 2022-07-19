@@ -36,6 +36,9 @@ class LitModel(pl.LightningModule):
             },
             "model": cfg.model,
         }
+        if cfg.model.get("pretrained"):
+            # tensorboard doesn't log bool values, convert to int
+            hparams["model"]["pretrained"] = int(hparams["model"]["pretrained"])
         return hparams
 
     def on_train_start(self):
