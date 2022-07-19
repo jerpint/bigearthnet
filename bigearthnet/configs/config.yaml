@@ -49,5 +49,6 @@ trainer:
   profiler: "pytorch"
 
 defaults:
+  - _self_
   - model: baseline.yaml
   - transforms: norm.yaml
