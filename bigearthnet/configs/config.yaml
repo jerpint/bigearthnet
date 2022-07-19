@@ -4,7 +4,7 @@ datamodule:
   dataset_name: "bigearthnet-mini"
   batch_size: 16
   num_workers: 0
-  transforms: ${transforms}
+  transforms: ${transforms.obj}
 
 optimizer:
   name: 'adam'  # adam or sgd
@@ -45,8 +45,16 @@ trainer:
   _target_: pytorch_lightning.Trainer
   callbacks: ${callbacks}
   logger: ${logger}
-  max_epochs: 5
+  max_epochs: 3
   profiler: "pytorch"
+
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%dT%H:%M:%S}
+  sweep:
+    dir: outputs/${now:%Y-%m-%dT%H:%M:%S}/multirun/
+  job:
+    chdir: true
 
 defaults:
   - _self_
