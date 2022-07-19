@@ -1,9 +1,8 @@
 import logging
 import os
 import pathlib
-import typing
 import tarfile
-
+import typing
 
 import gdown
 import hub
@@ -12,7 +11,6 @@ import pytorch_lightning as pl
 import torch.utils.data.dataloader
 import torch.utils.data.dataset
 from hydra.utils import instantiate
-from torchvision import transforms
 
 logger = logging.getLogger(__name__)
 
@@ -121,7 +119,6 @@ class DataModule(pl.LightningDataModule):
         batch_size: int,
         num_workers: int = 0,
         transforms=None,
-        **extra_hub_kwargs,
     ):
         """Validates the hyperparameter config dictionary and sets up internal attributes."""
         super().__init__()
@@ -130,7 +127,6 @@ class DataModule(pl.LightningDataModule):
         self.dataset_path = pathlib.Path(os.path.join(dataset_dir, dataset_name))
         self.batch_size = batch_size
         self.num_workers = num_workers
-        self._extra_hub_kwargs = extra_hub_kwargs
         self.train_dataset, self.valid_dataset, self.test_dataset = None, None, None
         self.transforms = transforms
 
@@ -175,19 +171,16 @@ class DataModule(pl.LightningDataModule):
             self.train_dataset = HubDataset(
                 self.dataset_path / "train",
                 transforms=self.transforms,
-                **self._extra_hub_kwargs,
             )
         if self.valid_dataset is None:
             self.valid_dataset = HubDataset(
                 self.dataset_path / "val",
                 transforms=self.transforms,
-                **self._extra_hub_kwargs,
             )
         if self.test_dataset is None:
             self.test_dataset = HubDataset(
                 self.dataset_path / "test",
                 transforms=self.transforms,
-                **self._extra_hub_kwargs,
             )
 
     def train_dataloader(self) -> torch.utils.data.dataloader.DataLoader:
@@ -219,16 +212,3 @@ class DataModule(pl.LightningDataModule):
             shuffle=False,
             num_workers=self.num_workers,
         )
-
-
-def load_transforms(cfg):
-    if cfg.get("transforms"):
-        return transforms.Compose([instantiate(T) for T in cfg.transforms])
-    return None
-
-
-def load_datamodule(cfg):
-    transforms = load_transforms(cfg)
-    data_module = DataModule(transforms=transforms, **cfg.datamodule)
-    data_module.setup()
-    return data_module

@@ -1,14 +1,17 @@
 datamodule:
+  _target_: bigearthnet.data.data_loader.DataModule
   dataset_dir: "${oc.env:HOME}/bigearthnet/bigearthnet/datasets/"
   dataset_name: "bigearthnet-mini"
   batch_size: 16
   num_workers: 0
+  transforms: ${transforms.obj}
 
 optimizer:
   name: 'adam'  # adam or sgd
   lr: 0.0001
 
 logger:
+  _target_: pytorch_lightning.loggers.TensorBoardLogger
   save_dir: "."
   name: ${datamodule.dataset_name}
   version: ${model.model_name}
@@ -20,10 +23,40 @@ monitor:
   mode: "min"
   patience: 10
 
+callbacks:
+  # Checkpoints last model, best model (based on value monitored)
+  # and terminates after patience epochs. 
+  - _target_: pytorch_lightning.callbacks.ModelCheckpoint
+    save_top_k: 1
+    monitor: "step"
+    mode: "max"
+    filename: "last-model"
+  - _target_: pytorch_lightning.callbacks.ModelCheckpoint
+    save_top_k: 1
+    monitor: ${monitor.name}/val
+    mode:  ${monitor.mode}
+    filename: "best-model-{epoch:02d}-{step:02d}"
+  - _target_: pytorch_lightning.callbacks.EarlyStopping
+    monitor: ${monitor.name}/val
+    mode:  ${monitor.mode}
+    patience: ${monitor.patience}
+
 trainer:
-  max_epochs: 5
+  _target_: pytorch_lightning.Trainer
+  callbacks: ${callbacks}
+  logger: ${logger}
+  max_epochs: 3
   profiler: "pytorch"
 
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%dT%H:%M:%S}
+  sweep:
+    dir: outputs/${now:%Y-%m-%dT%H:%M:%S}/multirun/
+  job:
+    chdir: true
+
 defaults:
+  - _self_
   - model: baseline.yaml
   - transforms: norm.yaml

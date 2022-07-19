@@ -1,9 +1,14 @@
-- _target_: torchvision.transforms.Normalize
-  mean:
-    - 721.2257105159645  # B02
-    - 878.5158627345414  # B03
-    - 869.6805989741447  # B04
-  std:
-    - 1465.656553928543  # B02
-    - 1359.523897551790  # B03
-    - 1452.286444583796  # B04
+obj:
+  _target_: torchvision.transforms.Compose
+  transforms:
+    - _target_: torchvision.transforms.Normalize
+      mean:
+        - 721.2257105159645  # B02
+        - 878.5158627345414  # B03
+        - 869.6805989741447  # B04
+      std:
+        - 1465.656553928543  # B02
+        - 1359.523897551790  # B03
+        - 1452.286444583796  # B04
+description: 
+  - "Normalize"
