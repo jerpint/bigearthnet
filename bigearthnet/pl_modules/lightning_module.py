@@ -149,20 +149,16 @@ class LitModel(pl.LightningModule):
         self.log_metrics(metrics, split="test")
 
     def log_metrics(self, metrics: typing.Dict, split: str):
-        # log to tensorboard
-        self.log(f"precision/{split}", metrics["precision"], on_epoch=True)
-        self.log(f"recall/{split}", metrics["recall"], on_epoch=True)
-        self.log(f"f1_score/{split}", metrics["f1_score"], on_epoch=True)
-
-        # add to logs
+        assert split in ["train", "val", "test"]
+        # print to logs
         log.info(f"{split} epoch: {self.current_epoch}")
         log.info(f"{split} classification report:\n{metrics['report']}")
 
-        # Here we log the confusion matrices in the logs as well as images in tensorboard
+        # Here we prepare logs for the confusion matrices (plots and text summary)
         conf_mats = metrics["conf_mats"]
         conf_mat_log = f"{split} Confusion matrices:\n:"
-        fig, axs = plt.subplots(9, 5, figsize=(12, 15))
-        [ax.set_axis_off() for ax in axs.ravel()]
+        conf_mat_fig, axs = plt.subplots(9, 5, figsize=(12, 15))
+        [ax.set_axis_off() for ax in axs.ravel()]  # default turn all axes off
         for cm, label, ax in zip(conf_mats, self.class_names, axs.ravel()):
             # add to log
             conf_mat_log += f"\n{label}\n{cm}\n"
@@ -174,11 +170,16 @@ class LitModel(pl.LightningModule):
             disp.plot(ax=ax, colorbar=False)
             ax.title.set_text(label[0:20])  # text cutoff
 
-        self.logger.experiment.add_figure(
-            f"confusion matrix/{split}", fig, self.global_step
-        )
+        # log to tensorboard
+        if split in ["train", "val"]:
+            self.log(f"precision/{split}", metrics["precision"], on_epoch=True)
+            self.log(f"recall/{split}", metrics["recall"], on_epoch=True)
+            self.log(f"f1_score/{split}", metrics["f1_score"], on_epoch=True)
+            self.logger.experiment.add_figure(
+                f"confusion matrix/{split}", conf_mat_fig, self.global_step
+            )
         log.info(conf_mat_log)
-        plt.close(fig)
+        plt.close(conf_mat_fig)
 
     def update_best_metric(self, metrics):
         """Update the best scoring metric for parallel coordinate plots."""
