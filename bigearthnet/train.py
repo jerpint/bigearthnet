@@ -10,7 +10,7 @@ from bigearthnet.pl_modules.lightning_module import LitModel
 log = logging.getLogger(__name__)
 
 
-@hydra.main(config_path="configs", config_name="config")
+@hydra.main(config_path="configs", config_name="config", version_base="1.2")
 def main(cfg: DictConfig):
 
     log.info("Beginning training...")
