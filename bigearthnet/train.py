@@ -3,7 +3,7 @@ import pathlib
 
 import hydra
 from hydra.utils import instantiate
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 
 from bigearthnet.pl_modules.lightning_module import LitModel
 
@@ -12,12 +12,7 @@ log = logging.getLogger(__name__)
 
 @hydra.main(config_path="configs", config_name="config", version_base="1.2")
 def main(cfg: DictConfig):
-
     log.info("Beginning training...")
-
-    # Log and save the config used for reproducibility
-    log.info(f"Configurations specified: {cfg}")
-    OmegaConf.save(cfg, "exp_config.yaml")
 
     # instantiate all objects from hydra configs
     model = LitModel(cfg)

@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import pytorch_lightning as pl
 import torch
 from hydra.utils import instantiate
+from omegaconf import DictConfig, OmegaConf
 from sklearn.metrics import (
     ConfusionMatrixDisplay,
     classification_report,
@@ -13,13 +14,15 @@ from sklearn.metrics import (
 )
 from torch import optim
 
+from bigearthnet.utils.reproducibility_utils import get_exp_details
+
 log = logging.getLogger(__name__)
 
 
 class LitModel(pl.LightningModule):
     """Base class for Pytorch Lightning model."""
 
-    def __init__(self, cfg):
+    def __init__(self, cfg: DictConfig):
         super().__init__()
         self.cfg = cfg
         self.model = instantiate(cfg.model)
@@ -41,7 +44,16 @@ class LitModel(pl.LightningModule):
             hparams["model"]["pretrained"] = int(hparams["model"]["pretrained"])
         return hparams
 
-    def on_train_start(self):
+    def log_exp_info(self):
+        """Log info like the git branch, hash, dependencies, etc."""
+        exp_details = get_exp_details(self.cfg)
+        log.info("Experiment info:" + exp_details + "\n")
+        self.logger.experiment.add_text("exp_details", exp_details)
+
+        # dump the config for reproducibility
+        OmegaConf.save(self.cfg, "exp_config.yaml")
+
+    def init_hparams(self):
         mode = self.cfg.monitor.mode
         name = self.cfg.monitor.name
         assert mode in ["min", "max"]
@@ -60,7 +72,13 @@ class LitModel(pl.LightningModule):
 
         self.val_best_metric = init_metrics[f"val_best_metrics/{name}"]
 
-        # get the classes
+    def on_train_start(self):
+        # log experiment details for reproducibility
+        self.log_exp_info()
+
+        self.init_hparams()
+
+        # get the class names (for later use)
         self.class_names: typing.List = (
             self.trainer.train_dataloader.dataset.datasets.class_names
         )
