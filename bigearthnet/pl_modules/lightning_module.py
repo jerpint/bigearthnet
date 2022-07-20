@@ -3,6 +3,7 @@ import typing
 
 import matplotlib.pyplot as plt
 import pytorch_lightning as pl
+import numpy as np
 import torch
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
@@ -235,3 +236,5 @@ class LitModel(pl.LightningModule):
                 },
             )
             self.val_best_metric = metrics[name]
+
+            np.save("val_best_metrics.npy", metrics)
