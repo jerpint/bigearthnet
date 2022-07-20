@@ -8,6 +8,7 @@ import sys
 import numpy as np
 import torch
 from git import InvalidGitRepositoryError, Repo
+from hydra.utils import get_original_cwd
 from omegaconf import DictConfig, OmegaConf
 from pip._internal.operations import freeze
 
@@ -33,15 +34,14 @@ def get_git_info(script_location):  # pragma: no cover
     :param script_location: (str) path to the script inside the git repos we want to find.
     :return: (str) the git hash for the repository of the provided script.
     """
-    if not script_location.endswith(".py"):
-        raise ValueError("script_location should point to a python script")
     repo_folder = os.path.dirname(script_location)
     try:
         repo = Repo(repo_folder, search_parent_directories=True)
         commit_hash = repo.head.commit
         branch_name = repo.active_branch
     except (InvalidGitRepositoryError, ValueError):
-        commit_hash = "git repository not found"
+        commit_hash = "commit_hash not found"
+        branch_name = "branch_name not found"
     return commit_hash, branch_name
 
 
@@ -52,8 +52,8 @@ def get_exp_details(cfg):  # pragma: no cover
     :param args: the argparser object.
     """
     # Log and save the config used for reproducibility
-    script_path = pathlib.Path(str(sys.modules["__main__"].__file__)).resolve()
-    git_hash, git_branch_name = get_git_info(str(script_path))
+    script_path = get_original_cwd()
+    git_hash, git_branch_name = get_git_info(script_path)
     hostname = socket.gethostname()
     dependencies = freeze.freeze()
     dependencies_str = "\n".join([d for d in dependencies])
