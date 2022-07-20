@@ -58,12 +58,10 @@ def get_exp_details(cfg):  # pragma: no cover
     dependencies = freeze.freeze()
     dependencies_str = "\n".join([d for d in dependencies])
     details = f"""
-              config:
-              {OmegaConf.to_yaml(cfg)}
+              config: {OmegaConf.to_yaml(cfg)}
               hostname: {hostname}
               git code hash: {git_hash}
               git branch name: {git_branch_name}
-              dependencies:
-              {dependencies_str}
+              dependencies: {dependencies_str}
               """
     return details
