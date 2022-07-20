@@ -13,7 +13,6 @@ optimizer:
 logger:
   _target_: pytorch_lightning.loggers.TensorBoardLogger
   save_dir: "."
-  name: ${datamodule.dataset_name}
   version: ${model.model_name}
 
 monitor:
@@ -50,9 +49,9 @@ trainer:
 
 hydra:
   run:
-    dir: outputs/${now:%Y-%m-%dT%H:%M:%S}
+    dir: outputs/${datamodule.dataset_name}/${now:%Y-%m-%dT%H:%M:%S}
   sweep:
-    dir: outputs/${now:%Y-%m-%dT%H:%M:%S}/multirun/
+    dir: outputs/${datamodule.dataset_name}/${now:%Y-%m-%dT%H:%M:%S}/multirun/
   job:
     chdir: true
 
