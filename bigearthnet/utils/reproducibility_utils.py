@@ -14,7 +14,7 @@ from pip._internal.operations import freeze
 logger = logging.getLogger(__name__)
 
 
-def set_seed(seed):  # pragma: no cover
+def set_seed(seed: int):  # pragma: no cover
     """Set the provided seed in python/numpy/DL framework.
 
     :param seed: (int) the seed
@@ -58,10 +58,12 @@ def get_exp_details(cfg):  # pragma: no cover
     dependencies = freeze.freeze()
     dependencies_str = "\n".join([d for d in dependencies])
     details = f"""
-              config: {OmegaConf.to_yaml(cfg)}
+              config:
+              {OmegaConf.to_yaml(cfg)}
               hostname: {hostname}
               git code hash: {git_hash}
               git branch name: {git_branch_name}
-              dependencies: {dependencies_str}
+              dependencies:
+              {dependencies_str}
               """
     return details

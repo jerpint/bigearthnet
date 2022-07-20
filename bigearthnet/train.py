@@ -6,13 +6,20 @@ from hydra.utils import instantiate
 from omegaconf import DictConfig
 
 from bigearthnet.pl_modules.lightning_module import LitModel
+from bigearthnet.utils.reproducibility_utils import set_seed
 
 log = logging.getLogger(__name__)
 
 
 @hydra.main(config_path="configs", config_name="config", version_base="1.2")
 def main(cfg: DictConfig):
+
     log.info("Beginning training...")
+
+    # set seed if explicitly passed
+    if cfg.get("seed"):
+        log.info(f"Setting seed to: {cfg.seed}")
+        set_seed(cfg.seed)
 
     # instantiate all objects from hydra configs
     model = LitModel(cfg)
