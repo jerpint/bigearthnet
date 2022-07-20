@@ -35,13 +35,13 @@ def get_git_info(script_location):  # pragma: no cover
     :return: (str) the git hash for the repository of the provided script.
     """
     repo_folder = os.path.dirname(script_location)
+    repo = Repo(repo_folder, search_parent_directories=True)
+    commit_hash = repo.head.commit
+
     try:
-        repo = Repo(repo_folder, search_parent_directories=True)
-        commit_hash = repo.head.commit
         branch_name = repo.active_branch
-    except (InvalidGitRepositoryError, ValueError):
-        commit_hash = "commit_hash not found"
-        branch_name = "branch_name not found"
+    except TypeError:
+        branch_name = "detached head"
     return commit_hash, branch_name
 
 
