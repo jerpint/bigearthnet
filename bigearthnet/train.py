@@ -3,9 +3,10 @@ import pathlib
 
 import hydra
 from hydra.utils import instantiate
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 
 from bigearthnet.pl_modules.lightning_module import LitModel
+from bigearthnet.utils.reproducibility_utils import set_seed
 
 log = logging.getLogger(__name__)
 
@@ -15,9 +16,10 @@ def main(cfg: DictConfig):
 
     log.info("Beginning training...")
 
-    # Log and save the config used for reproducibility
-    log.info(f"Configurations specified: {cfg}")
-    OmegaConf.save(cfg, "exp_config.yaml")
+    # set seed if explicitly passed
+    if cfg.get("seed"):
+        log.info(f"Setting seed to: {cfg.seed}")
+        set_seed(cfg.seed)
 
     # instantiate all objects from hydra configs
     model = LitModel(cfg)
