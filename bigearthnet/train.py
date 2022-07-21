@@ -17,9 +17,9 @@ def main(cfg: DictConfig):
     log.info("Beginning training...")
 
     # set seed if explicitly passed
-    if cfg.get("seed"):
-        log.info(f"Setting seed to: {cfg.seed}")
-        set_seed(cfg.seed)
+    if cfg.experiment.get("seed"):
+        log.info(f"Setting seed to: {cfg.experiment.seed}")
+        set_seed(cfg.experiment.seed)
 
     # instantiate all objects from hydra configs
     model = LitModel(cfg)
