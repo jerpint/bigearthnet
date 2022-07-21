@@ -1,0 +1,24 @@
+hydra:
+sweeper:
+   orion:
+      name: 'experiment'
+      version: '1'
+
+   algorithm:
+      type: random
+      config:
+      seed: 1
+
+   worker:
+      n_workers: -1
+      max_broken: 3
+      max_trials: 100
+
+   storage:
+      type: pickledb
+      host: 'database.pkl'
+
+   # default parametrization of the search space
+   parametrization:
+      optimizer:
+        lr: "uniform(0.00001, 0.01)"
