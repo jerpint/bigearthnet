@@ -11,7 +11,6 @@ setup(
         "gitpython",
         "hub",
         "hydra-core>=1.2",
-        "hydra-joblib-launcher",
         "jupyter",
         "matplotlib",
         "pyyaml>=5.3",
