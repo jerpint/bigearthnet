@@ -12,7 +12,7 @@ sweeper:
    worker:
       n_workers: -1
       max_broken: 3
-      max_trials: 100
+      max_trials: 10
 
    storage:
       type: pickledb

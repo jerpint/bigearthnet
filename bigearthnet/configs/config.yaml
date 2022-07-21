@@ -8,7 +8,8 @@ datamodule:
 
 optimizer:
   name: 'adam'  # adam or sgd
-  lr: 0.0001
+  # lr: 0.0001
+  lr: ${lr}  # set by orion
 
 logger:
   _target_: pytorch_lightning.loggers.TensorBoardLogger
@@ -47,6 +48,8 @@ trainer:
   max_epochs: 3
   profiler: "pytorch"
 
+lr: 0.0001
+
 hydra:
   run:
     dir: outputs/${datamodule.dataset_name}/${now:%Y-%m-%dT%H:%M:%S}
@@ -54,8 +57,31 @@ hydra:
     dir: outputs/${datamodule.dataset_name}/${now:%Y-%m-%dT%H:%M:%S}/multirun/
   job:
     chdir: true
+  sweeper:
+    orion:
+      name: 'experiment'
+      version: '1'
+
+    algorithm:
+      type: random
+      config:
+        seed: 1
+
+    worker:
+      n_workers: -1
+      max_broken: 3
+      max_trials: 3
+
+    storage:
+      type: pickledb
+      host: 'database.pkl'
+
+    # default parametrization of the search space
+    parametrization:
+      lr: "uniform(0, 1)"
 
 defaults:
   - _self_
   - model: baseline.yaml
   - transforms: norm.yaml
+  - override hydra/sweeper: orion
