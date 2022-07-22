@@ -50,17 +50,20 @@ class LitModel(pl.LightningModule):
         """Log info like the git branch, hash, dependencies, etc."""
         exp_details = get_exp_details(self.cfg)
         log.info("Experiment info:" + exp_details + "\n")
-        self.logger.experiment.add_text("exp_details", exp_details)
 
         # dump the config for reproducibility
-        output_dir = os.path.join(self.logger.log_dir) if self.logger else "."
+        output_dir = self.get_output_dir()
         OmegaConf.save(self.cfg, os.path.join(output_dir, "exp_config.yaml"))
 
-    def init_hparams(self):
+        self.logger.log_hyperparams(self.extract_hparams(self.cfg))
+
+    def init_best_metric(self):
         mode = self.cfg.monitor.mode
         name = self.cfg.monitor.name
         assert mode in ["min", "max"]
         assert name in ["loss", "precision", "recall", "f1_score"]
+
+
         # initial metrics before training
         init_metrics = {
             "val_best_metrics/loss": 99999,
@@ -68,18 +71,16 @@ class LitModel(pl.LightningModule):
             "val_best_metrics/recall": 0,
             "val_best_metrics/f1_score": 0,
         }
-
-        self.logger.log_hyperparams(
-            self.extract_hparams(self.cfg), metrics=init_metrics
-        )
-
         self.val_best_metric = init_metrics[f"val_best_metrics/{name}"]
+
+
+
 
     def on_train_start(self):
         # log experiment details for reproducibility
         self.log_exp_info()
 
-        self.init_hparams()
+        self.init_best_metric()
 
         # get the class names (for later use)
         self.class_names: typing.List = (
@@ -146,7 +147,8 @@ class LitModel(pl.LightningModule):
         """Runs a prediction step for training, returning the loss."""
         outputs = self._generic_step(batch, batch_idx)
         self.log(
-            "loss/train",
+            #  "loss/train",
+            "train_loss",
             outputs["loss"],
             on_step=True,
             on_epoch=True,
@@ -163,7 +165,8 @@ class LitModel(pl.LightningModule):
         """Runs a prediction step for validation, logging the loss."""
         outputs = self._generic_step(batch, batch_idx)
         self.log(
-            "loss/val",
+            #  "loss/val",
+            "val_loss",
             outputs["loss"],
             on_step=True,
             on_epoch=True,
@@ -211,14 +214,27 @@ class LitModel(pl.LightningModule):
 
         # log to tensorboard
         if split in ["train", "val"]:
-            self.log(f"precision/{split}", metrics["precision"], on_epoch=True)
-            self.log(f"recall/{split}", metrics["recall"], on_epoch=True)
-            self.log(f"f1_score/{split}", metrics["f1_score"], on_epoch=True)
-            self.logger.experiment.add_figure(
-                f"confusion matrix/{split}", conf_mat_fig, self.global_step
-            )
+            self.log(f"{split}_precision", metrics["precision"], on_epoch=True)
+            self.log(f"{split}_recall", metrics["recall"], on_epoch=True)
+            self.log(f"{split}_f1_score", metrics["f1_score"], on_epoch=True)
+            # TODO: Add figure support to aim
+            #  self.logger.experiment.add_figure(
+            #      f"confusion matrix/{split}", conf_mat_fig, self.global_step
+            #  )
         log.info(conf_mat_log)
         plt.close(conf_mat_fig)
+
+    def get_output_dir(self):
+        """Output dir where checkpoints also get saved."""
+        save_dir = self.logger.save_dir
+        exp_name = self.logger._experiment_name
+        run_hash = self.logger._run_hash
+
+        output_dir =  os.path.join(save_dir, exp_name, run_hash)
+
+        if not os.path.isdir(output_dir):
+            os.mkdir(output_dir)
+        return output_dir
 
     def update_best_metric(self, metrics):
         """Update the best scoring metric for parallel coordinate plots."""
@@ -230,14 +246,12 @@ class LitModel(pl.LightningModule):
         if mode == "max" and metrics[name] > self.val_best_metric:
             update = True
         if update:
-            self.logger.log_hyperparams(
-                self.extract_hparams(self.cfg),
-                metrics={
-                    f"val_best_metrics/{k}": metrics[k]
-                    for k in ["loss", "precision", "recall", "f1_score"]
-                },
-            )
+            for k in ["loss", "precision", "recall", "f1_score"]:
+                self.log(
+                        f"val_best_{k}",
+                        metrics[k]
+                )
             self.val_best_metric = metrics[name]
 
-            output_dir = os.path.join(self.logger.log_dir) if self.logger else "."
+            output_dir = self.get_output_dir()
             np.save(os.path.join(output_dir, "val_best_metrics.npy"), metrics)

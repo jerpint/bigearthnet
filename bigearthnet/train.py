@@ -31,10 +31,10 @@ def main(cfg: DictConfig):
     trainer.fit(model, datamodule=datamodule)
     log.info("Training Done.")
 
-    # Evaluate best model on test set
-    ckpt_path = str(list(pathlib.Path(".").rglob("best-model*.ckpt"))[0].resolve())
-    trainer.test(ckpt_path=ckpt_path, datamodule=datamodule)
-    log.info("Test evaluation Done.")
+    #  # Evaluate best model on test set
+    #  ckpt_path = str(list(pathlib.Path(".").rglob("best-model*.ckpt"))[0].resolve())
+    #  trainer.test(ckpt_path=ckpt_path, datamodule=datamodule)
+    #  log.info("Test evaluation Done.")
 
 
 if __name__ == "__main__":

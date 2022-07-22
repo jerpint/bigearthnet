@@ -7,6 +7,7 @@ setup(
     packages=find_packages(include=["bigearthnet", "bigearthnet.*"]),
     python_requires=">=3.8",
     install_requires=[
+        "aim",
         "gdown",
         "gitpython",
         "hub",

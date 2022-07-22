@@ -11,8 +11,12 @@ optimizer:
   lr: 0.0001
 
 logger:
-  _target_: pytorch_lightning.loggers.TensorBoardLogger
-  save_dir: "."
+  # _target_: pytorch_lightning.loggers.TensorBoardLogger
+  _target_: aim.pytorch_lightning.AimLogger
+  experiment: ${oc.select:experiment.group,default_group}
+  train_metric_prefix: 'train_'
+  val_metric_prefix: 'val_'
+
 
 monitor:
   # Keeps track of this value (from validation set) 
@@ -31,11 +35,11 @@ callbacks:
     filename: "last-model"
   - _target_: pytorch_lightning.callbacks.ModelCheckpoint
     save_top_k: 1
-    monitor: ${monitor.name}/val
+    monitor: val_${monitor.name}
     mode:  ${monitor.mode}
     filename: "best-model-{epoch:02d}-{step:02d}"
   - _target_: pytorch_lightning.callbacks.EarlyStopping
-    monitor: ${monitor.name}/val
+    monitor: val_${monitor.name}
     mode:  ${monitor.mode}
     patience: ${monitor.patience}
 
