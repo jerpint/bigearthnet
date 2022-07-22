@@ -13,7 +13,6 @@ optimizer:
 logger:
   _target_: pytorch_lightning.loggers.TensorBoardLogger
   save_dir: "."
-  version: ${model.model_name}
 
 monitor:
   # Keeps track of this value (from validation set) 
@@ -47,11 +46,16 @@ trainer:
   max_epochs: 3
   profiler: "pytorch"
 
+experiment:
+  group: ???
+  seed: ???
+
 hydra:
   run:
-    dir: outputs/${datamodule.dataset_name}/${now:%Y-%m-%dT%H:%M:%S}
+    dir: outputs/${datamodule.dataset_name}/${oc.select:experiment.group,default_group}/${now:%Y-%m-%dT%H:%M:%S}/${model.model_name}_lr_${optimizer.lr}_${optimizer.name}/
   sweep:
-    dir: outputs/${datamodule.dataset_name}/${now:%Y-%m-%dT%H:%M:%S}/multirun/
+    dir: outputs/${datamodule.dataset_name}/${oc.select:experiment.group,default_group}/${now:%Y-%m-%dT%H:%M:%S}/multirun/
+    subdir: ${model.model_name}_lr_${optimizer.lr}_${optimizer.name}/
   job:
     chdir: true
 

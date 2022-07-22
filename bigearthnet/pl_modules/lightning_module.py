@@ -1,5 +1,6 @@
 import logging
 import typing
+import os
 
 import matplotlib.pyplot as plt
 import pytorch_lightning as pl
@@ -52,7 +53,8 @@ class LitModel(pl.LightningModule):
         self.logger.experiment.add_text("exp_details", exp_details)
 
         # dump the config for reproducibility
-        OmegaConf.save(self.cfg, "exp_config.yaml")
+        output_dir = os.path.join(self.logger.log_dir) if self.logger else "."
+        OmegaConf.save(self.cfg, os.path.join(output_dir, "exp_config.yaml"))
 
     def init_hparams(self):
         mode = self.cfg.monitor.mode
@@ -237,4 +239,5 @@ class LitModel(pl.LightningModule):
             )
             self.val_best_metric = metrics[name]
 
-            np.save("val_best_metrics.npy", metrics)
+            output_dir = os.path.join(self.logger.log_dir) if self.logger else "."
+            np.save(os.path.join(output_dir, "val_best_metrics.npy"), metrics)
