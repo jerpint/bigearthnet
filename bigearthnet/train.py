@@ -36,6 +36,8 @@ def main(cfg: DictConfig):
     trainer.test(ckpt_path=ckpt_path, datamodule=datamodule)
     log.info("Test evaluation Done.")
 
+    return model.val_best_metric
+
 
 if __name__ == "__main__":
     main()
