@@ -8,7 +8,6 @@ datamodule:
 
 optimizer:
   name: 'adam'  # adam or sgd
-  # lr: 0.0001
   lr: ${lr}  # set by orion
 
 logger:
@@ -48,6 +47,7 @@ trainer:
   max_epochs: 3
   profiler: "pytorch"
 
+# Orion doesn't seem to support overriding nested attributes
 lr: 0.0001
 
 hydra:
@@ -57,28 +57,6 @@ hydra:
     dir: outputs/${datamodule.dataset_name}/${now:%Y-%m-%dT%H:%M:%S}/multirun/
   job:
     chdir: true
-  sweeper:
-    orion:
-      name: 'experiment'
-      version: '1'
-
-    algorithm:
-      type: random
-      config:
-        seed: 1
-
-    worker:
-      n_workers: -1
-      max_broken: 3
-      max_trials: 3
-
-    storage:
-      type: pickledb
-      host: 'database.pkl'
-
-    # default parametrization of the search space
-    parametrization:
-      lr: "uniform(0, 1)"
 
 defaults:
   - _self_
