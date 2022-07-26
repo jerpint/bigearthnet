@@ -13,9 +13,16 @@ worker:
   max_trials: 3
 
 storage:
-  type: pickledb
-  host: 'database.pkl'
+  type: legacy
 
-# default parametrization of the search space
+  database:
+    type: pickleddb
+    host: 'database.pkl'
+
+# parametrization of the hyperparameter space
 parametrization:
-  lr: "uniform(0, 1)"
+  datamodule:
+    batch_size: "choices([64, 128, 256])"
+  optimizer:
+    lr: "uniform(0, 1)"
+    name: "choices(['adam', 'sgd'])"
