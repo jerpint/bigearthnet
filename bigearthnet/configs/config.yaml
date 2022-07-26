@@ -47,8 +47,6 @@ trainer:
   max_epochs: 3
   profiler: "pytorch"
 
-# Orion doesn't seem to support overriding nested attributes
-lr: 0.0001
 
 hydra:
   run:
