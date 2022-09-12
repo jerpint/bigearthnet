@@ -37,6 +37,7 @@ callbacks:
     mode:  ${monitor.mode}
     patience: ${monitor.patience}
   - _target_: bigearthnet.pl_modules.callbacks.ReproducibilityLogging
+  - _target_: bigearthnet.pl_modules.callbacks.MonitorHyperParameters
 
 trainer:
   _target_: pytorch_lightning.Trainer
