@@ -1,9 +1,7 @@
 import logging
-import os
 import typing
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pytorch_lightning as pl
 import torch
 from hydra.utils import instantiate
@@ -19,6 +17,22 @@ from torch import optim
 log = logging.getLogger(__name__)
 
 
+def _plot_conf_mats(conf_mats: typing.List, class_names: typing.List[str]):
+    """Creates a matplotlib figure with each subplot a unique confusion matrix."""
+    conf_mat_fig, axs = plt.subplots(9, 5, figsize=(12, 15))
+    [ax.set_axis_off() for ax in axs.ravel()]  # turn all axes off
+    for cm, label, ax in zip(conf_mats, class_names, axs.ravel()):
+
+        # add to figure
+        disp = ConfusionMatrixDisplay(
+            confusion_matrix=cm,
+        )
+        disp.plot(ax=ax, colorbar=False)
+        ax.title.set_text(label[0:20])  # text cutoff for displaying
+
+    return conf_mat_fig
+
+
 class LitModel(pl.LightningModule):
     """Base class for Pytorch Lightning model."""
 
@@ -27,47 +41,10 @@ class LitModel(pl.LightningModule):
         self.cfg = cfg
         self.model = instantiate(cfg.model)
         self.loss_fn = torch.nn.BCEWithLogitsLoss()
-
-    @staticmethod
-    def extract_hparams(cfg) -> typing.Dict:
-        """Select which of the config params to log in logger."""
-        hparams = {
-            "optimizer": cfg.optimizer,
-            "transforms": cfg.transforms.description,
-            "datamodule": {
-                k: cfg.datamodule[k] for k in ["batch_size", "dataset_name"]
-            },
-            "model": cfg.model,
-        }
-        if cfg.model.get("pretrained"):
-            # tensorboard doesn't log bool values, convert to int
-            hparams["model"]["pretrained"] = int(hparams["model"]["pretrained"])
-        return hparams
-
-    def init_hparams(self):
-        mode = self.cfg.monitor.mode
-        name = self.cfg.monitor.name
-        assert mode in ["min", "max"]
-        assert name in ["loss", "precision", "recall", "f1_score"]
-        # initial metrics before training
-        init_metrics = {
-            "val_best_metrics/loss": 99999,
-            "val_best_metrics/precision": 0,
-            "val_best_metrics/recall": 0,
-            "val_best_metrics/f1_score": 0,
-        }
-
-        self.logger.log_hyperparams(
-            self.extract_hparams(self.cfg), metrics=init_metrics
-        )
-
-        self.val_best_metric = init_metrics[f"val_best_metrics/{name}"]
+        self.save_hyperparameters(cfg, logger=False)
 
     def on_train_start(self):
-
-        self.init_hparams()
-
-        # get the class names (for later use)
+        # set the class names to be accessible for later use
         self.class_names: typing.List = (
             self.trainer.train_dataloader.dataset.datasets.class_names
         )
@@ -95,7 +72,6 @@ class LitModel(pl.LightningModule):
         return {"loss": loss, "targets": targets, "logits": logits}
 
     def _generic_epoch_end(self, step_outputs):
-
         all_targets = []
         all_preds = []
         all_loss = []
@@ -113,7 +89,9 @@ class LitModel(pl.LightningModule):
             y_true=all_targets, y_pred=all_preds, average="micro"
         )
         avg_loss = sum(all_loss) / len(all_loss)
-        conf_mats = multilabel_confusion_matrix(y_true=all_targets, y_pred=all_preds)
+        conf_mats = multilabel_confusion_matrix(
+            y_true=all_targets, y_pred=all_preds, labels=range(len(self.class_names))
+        )
         report = classification_report(
             y_true=all_targets, y_pred=all_preds, target_names=self.class_names
         )
@@ -161,8 +139,8 @@ class LitModel(pl.LightningModule):
     def validation_epoch_end(self, validation_step_outputs):
         if not self.trainer.sanity_checking:
             metrics = self._generic_epoch_end(validation_step_outputs)
+            self.val_metrics = metrics  # cache for use in callback
             self.log_metrics(metrics, split="val")
-            self.update_best_metric(metrics)
 
     def test_step(self, batch, batch_idx):
         """Runs a predictionval_ step for testing, logging the loss."""
@@ -174,56 +152,29 @@ class LitModel(pl.LightningModule):
         self.log_metrics(metrics, split="test")
 
     def log_metrics(self, metrics: typing.Dict, split: str):
+        """Logs all metrics to logs and to tensorboard."""
+        conf_mats = metrics["conf_mats"]
+
         assert split in ["train", "val", "test"]
-        # print to logs
         log.info(f"{split} epoch: {self.current_epoch}")
         log.info(f"{split} classification report:\n{metrics['report']}")
 
-        # Here we prepare logs for the confusion matrices (plots and text summary)
-        conf_mats = metrics["conf_mats"]
+        # Parse conf. mats to plaintext to print in log
         conf_mat_log = f"{split} Confusion matrices:\n:"
-        conf_mat_fig, axs = plt.subplots(9, 5, figsize=(12, 15))
-        [ax.set_axis_off() for ax in axs.ravel()]  # default turn all axes off
-        for cm, label, ax in zip(conf_mats, self.class_names, axs.ravel()):
-            # add to log
+        for cm, label in zip(conf_mats, self.class_names):
             conf_mat_log += f"\n{label}\n{cm}\n"
+        log.info(conf_mat_log)
 
-            # add to figure
-            disp = ConfusionMatrixDisplay(
-                confusion_matrix=cm,
-            )
-            disp.plot(ax=ax, colorbar=False)
-            ax.title.set_text(label[0:20])  # text cutoff
-
-        # log to tensorboard
+        # log metrics to tensorboard
         if split in ["train", "val"]:
             self.log(f"precision/{split}", metrics["precision"], on_epoch=True)
             self.log(f"recall/{split}", metrics["recall"], on_epoch=True)
             self.log(f"f1_score/{split}", metrics["f1_score"], on_epoch=True)
+
+            # Generate the figure with confusion matrices
+            # and plot it to tensorboard
+            conf_mat_figure = _plot_conf_mats(conf_mats, self.class_names)
             self.logger.experiment.add_figure(
-                f"confusion matrix/{split}", conf_mat_fig, self.global_step
+                f"confusion matrix/{split}", conf_mat_figure, self.global_step
             )
-        log.info(conf_mat_log)
-        plt.close(conf_mat_fig)
-
-    def update_best_metric(self, metrics):
-        """Update the best scoring metric for parallel coordinate plots."""
-        mode = self.cfg.monitor.mode
-        name = self.cfg.monitor.name
-        update = False
-        if mode == "min" and metrics[name] < self.val_best_metric:
-            update = True
-        if mode == "max" and metrics[name] > self.val_best_metric:
-            update = True
-        if update:
-            self.logger.log_hyperparams(
-                self.extract_hparams(self.cfg),
-                metrics={
-                    f"val_best_metrics/{k}": metrics[k]
-                    for k in ["loss", "precision", "recall", "f1_score"]
-                },
-            )
-            self.val_best_metric = metrics[name]
-
-            output_dir = os.path.join(self.logger.log_dir) if self.logger else "."
-            np.save(os.path.join(output_dir, "val_best_metrics.npy"), metrics)
+            plt.close(conf_mat_figure)
