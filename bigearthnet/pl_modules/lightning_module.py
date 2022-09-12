@@ -1,10 +1,10 @@
 import logging
-import typing
 import os
+import typing
 
 import matplotlib.pyplot as plt
-import pytorch_lightning as pl
 import numpy as np
+import pytorch_lightning as pl
 import torch
 from hydra.utils import instantiate
 from omegaconf import DictConfig
@@ -15,7 +15,6 @@ from sklearn.metrics import (
     precision_recall_fscore_support,
 )
 from torch import optim
-
 
 log = logging.getLogger(__name__)
 

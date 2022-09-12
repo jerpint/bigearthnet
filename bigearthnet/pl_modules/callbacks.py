@@ -1,14 +1,13 @@
 import logging
 import os
-
-from pytorch_lightning.callbacks import Callback
-from omegaconf import OmegaConf, DictConfig
-
-from pip._internal.operations import freeze
 import socket
-from hydra.utils import get_original_cwd
-from bigearthnet.utils.reproducibility_utils import get_git_info
 
+from hydra.utils import get_original_cwd
+from omegaconf import DictConfig, OmegaConf
+from pip._internal.operations import freeze
+from pytorch_lightning.callbacks import Callback
+
+from bigearthnet.utils.reproducibility_utils import get_git_info
 
 log = logging.getLogger(__name__)
 
