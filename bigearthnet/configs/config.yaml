@@ -1,6 +1,6 @@
 datamodule:
-  _target_: bigearthnet.data.data_loader.DataModule
-  dataset_dir: "${oc.env:HOME}/bigearthnet/bigearthnet/datasets/"
+  _target_: bigearthnet.datamodules.bigearthnet_datamodule.BigEarthNetDataModule
+  dataset_dir: "${oc.env:HOME}/bigearthnet/bigearthnet/data/"
   dataset_name: "bigearthnet-mini"
   batch_size: 16
   num_workers: 0

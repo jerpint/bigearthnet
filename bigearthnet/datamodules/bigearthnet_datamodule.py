@@ -19,7 +19,7 @@ DRIVE_URLS = {
 }
 
 
-class HubDataset(torch.utils.data.dataset.Dataset):
+class BigEarthNetHubDataset(torch.utils.data.dataset.Dataset):
     """Dataset class used to iterate over the BigEarthNet-S2 data."""
 
     def __init__(
@@ -108,7 +108,7 @@ class HubDataset(torch.utils.data.dataset.Dataset):
         return list(self.tensor_info.keys())
 
 
-class DataModule(pl.LightningDataModule):
+class BigEarthNetDataModule(pl.LightningDataModule):
     """Data module class that prepares BigEarthNet-S2 dataset parsers and instantiates data loaders."""
 
     def __init__(
@@ -167,17 +167,17 @@ class DataModule(pl.LightningDataModule):
     def setup(self, stage=None) -> None:
         """Parses and splits all samples across the train/valid/test datasets."""
         if self.train_dataset is None:
-            self.train_dataset = HubDataset(
+            self.train_dataset = BigEarthNetHubDataset(
                 self.dataset_path / "train",
                 transforms=self.transforms,
             )
         if self.valid_dataset is None:
-            self.valid_dataset = HubDataset(
+            self.valid_dataset = BigEarthNetHubDataset(
                 self.dataset_path / "val",
                 transforms=self.transforms,
             )
         if self.test_dataset is None:
-            self.test_dataset = HubDataset(
+            self.test_dataset = BigEarthNetHubDataset(
                 self.dataset_path / "test",
                 transforms=self.transforms,
             )
