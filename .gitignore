@@ -1,7 +1,7 @@
 .idea
 
 lightning_logs/
-outputs/
+outputs*/
 datasets/
 .DS_Store
 

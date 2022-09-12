@@ -1,6 +1,6 @@
 datamodule:
-  _target_: bigearthnet.data.data_loader.DataModule
-  dataset_dir: "${oc.env:HOME}/bigearthnet/bigearthnet/datasets/"
+  _target_: bigearthnet.datamodules.bigearthnet_datamodule.BigEarthNetDataModule
+  dataset_dir: "${oc.env:HOME}/bigearthnet/bigearthnet/data/"
   dataset_name: "bigearthnet-mini"
   batch_size: 16
   num_workers: 0
@@ -36,8 +36,8 @@ callbacks:
     monitor: ${monitor.name}/val
     mode:  ${monitor.mode}
     patience: ${monitor.patience}
-  - _target_: bigearthnet.pl_modules.callbacks.ReproducibilityLogging
-  - _target_: bigearthnet.pl_modules.callbacks.MonitorHyperParameters
+  - _target_: bigearthnet.utils.callbacks.ReproducibilityLogging
+  - _target_: bigearthnet.utils.callbacks.MonitorHyperParameters
 
 trainer:
   _target_: pytorch_lightning.Trainer
