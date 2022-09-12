@@ -1,9 +1,7 @@
 import logging
-import os
 import typing
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pytorch_lightning as pl
 import torch
 from hydra.utils import instantiate
@@ -19,6 +17,22 @@ from torch import optim
 log = logging.getLogger(__name__)
 
 
+def _plot_conf_mats(conf_mats: typing.List, class_names: typing.List):
+    """Creates a matplotlib figure with each subplot a unique confusion matrix."""
+    conf_mat_fig, axs = plt.subplots(9, 5, figsize=(12, 15))
+    [ax.set_axis_off() for ax in axs.ravel()]  # turn all axes off
+    for cm, label, ax in zip(conf_mats, class_names, axs.ravel()):
+
+        # add to figure
+        disp = ConfusionMatrixDisplay(
+            confusion_matrix=cm,
+        )
+        disp.plot(ax=ax, colorbar=False)
+        ax.title.set_text(label[0:20])  # text cutoff for displaying
+
+    return conf_mat_fig
+
+
 class LitModel(pl.LightningModule):
     """Base class for Pytorch Lightning model."""
 
@@ -27,8 +41,7 @@ class LitModel(pl.LightningModule):
         self.cfg = cfg
         self.model = instantiate(cfg.model)
         self.loss_fn = torch.nn.BCEWithLogitsLoss()
-
-
+        self.save_hyperparameters(cfg, logger=False)
 
     def on_train_start(self):
         # set the class names to be accessible for later use
@@ -124,8 +137,8 @@ class LitModel(pl.LightningModule):
     def validation_epoch_end(self, validation_step_outputs):
         if not self.trainer.sanity_checking:
             metrics = self._generic_epoch_end(validation_step_outputs)
+            self.val_metrics = metrics  # cache for use in callback
             self.log_metrics(metrics, split="val")
-            self.val_metrics = metrics # cache for use in callback
 
     def test_step(self, batch, batch_idx):
         """Runs a predictionval_ step for testing, logging the loss."""
@@ -137,34 +150,29 @@ class LitModel(pl.LightningModule):
         self.log_metrics(metrics, split="test")
 
     def log_metrics(self, metrics: typing.Dict, split: str):
+        """Logs all metrics to logs and to tensorboard."""
+        conf_mats = metrics["conf_mats"]
+
         assert split in ["train", "val", "test"]
-        # print to logs
         log.info(f"{split} epoch: {self.current_epoch}")
         log.info(f"{split} classification report:\n{metrics['report']}")
 
-        # Here we prepare logs for the confusion matrices (plots and text summary)
-        conf_mats = metrics["conf_mats"]
+        # Parse conf. mats to plaintext to print in log
         conf_mat_log = f"{split} Confusion matrices:\n:"
-        conf_mat_fig, axs = plt.subplots(9, 5, figsize=(12, 15))
-        [ax.set_axis_off() for ax in axs.ravel()]  # default turn all axes off
-        for cm, label, ax in zip(conf_mats, self.class_names, axs.ravel()):
-            # add to log
+        for cm, label in zip(conf_mats, self.class_names):
             conf_mat_log += f"\n{label}\n{cm}\n"
+        log.info(conf_mat_log)
 
-            # add to figure
-            disp = ConfusionMatrixDisplay(
-                confusion_matrix=cm,
-            )
-            disp.plot(ax=ax, colorbar=False)
-            ax.title.set_text(label[0:20])  # text cutoff
-
-        # log to tensorboard
+        # log metrics to tensorboard
         if split in ["train", "val"]:
             self.log(f"precision/{split}", metrics["precision"], on_epoch=True)
             self.log(f"recall/{split}", metrics["recall"], on_epoch=True)
             self.log(f"f1_score/{split}", metrics["f1_score"], on_epoch=True)
+
+            # Generate the figure with confusion matrices
+            # and plot it to tensorboard
+            conf_mat_figure = _plot_conf_mats(conf_mats, self.class_names)
             self.logger.experiment.add_figure(
-                f"confusion matrix/{split}", conf_mat_fig, self.global_step
+                f"confusion matrix/{split}", conf_mat_figure, self.global_step
             )
-        log.info(conf_mat_log)
-        plt.close(conf_mat_fig)
+            plt.close(conf_mat_figure)

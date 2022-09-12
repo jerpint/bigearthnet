@@ -3,7 +3,6 @@ import os
 import socket
 import typing
 
-import numpy as np
 from hydra.utils import get_original_cwd
 from omegaconf import DictConfig, OmegaConf
 from pip._internal.operations import freeze
@@ -99,7 +98,6 @@ class MonitorHyperParameters(Callback):
             self.extract_hparams(pl_module.cfg), metrics=init_metrics
         )
 
-
     @staticmethod
     def requires_update(metrics, mode, name, best_value):
         if mode == "min" and metrics[name] < best_value:
@@ -107,7 +105,6 @@ class MonitorHyperParameters(Callback):
         if mode == "max" and metrics[name] > best_value:
             return True
         return False
-
 
     def update_best_metric(self, trainer, pl_module):
         """Update the best scoring metric for parallel coordinate plots."""
