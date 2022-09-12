@@ -10,7 +10,6 @@ import numpy as np
 import pytorch_lightning as pl
 import torch.utils.data.dataloader
 import torch.utils.data.dataset
-from hydra.utils import instantiate
 
 logger = logging.getLogger(__name__)
 

@@ -22,8 +22,6 @@ monitor:
   patience: 10
 
 callbacks:
-  # Checkpoints last model, best model (based on value monitored)
-  # and terminates after patience epochs. 
   - _target_: pytorch_lightning.callbacks.ModelCheckpoint
     save_top_k: 1
     monitor: "step"
@@ -38,6 +36,7 @@ callbacks:
     monitor: ${monitor.name}/val
     mode:  ${monitor.mode}
     patience: ${monitor.patience}
+  - _target_: bigearthnet.pl_modules.callbacks.ReproducibilityLogging
 
 trainer:
   _target_: pytorch_lightning.Trainer

@@ -1,13 +1,13 @@
 import logging
-import typing
 import os
+import typing
 
 import matplotlib.pyplot as plt
-import pytorch_lightning as pl
 import numpy as np
+import pytorch_lightning as pl
 import torch
 from hydra.utils import instantiate
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 from sklearn.metrics import (
     ConfusionMatrixDisplay,
     classification_report,
@@ -15,8 +15,6 @@ from sklearn.metrics import (
     precision_recall_fscore_support,
 )
 from torch import optim
-
-from bigearthnet.utils.reproducibility_utils import get_exp_details
 
 log = logging.getLogger(__name__)
 
@@ -46,16 +44,6 @@ class LitModel(pl.LightningModule):
             hparams["model"]["pretrained"] = int(hparams["model"]["pretrained"])
         return hparams
 
-    def log_exp_info(self):
-        """Log info like the git branch, hash, dependencies, etc."""
-        exp_details = get_exp_details(self.cfg)
-        log.info("Experiment info:" + exp_details + "\n")
-        self.logger.experiment.add_text("exp_details", exp_details)
-
-        # dump the config for reproducibility
-        output_dir = os.path.join(self.logger.log_dir) if self.logger else "."
-        OmegaConf.save(self.cfg, os.path.join(output_dir, "exp_config.yaml"))
-
     def init_hparams(self):
         mode = self.cfg.monitor.mode
         name = self.cfg.monitor.name
@@ -76,8 +64,6 @@ class LitModel(pl.LightningModule):
         self.val_best_metric = init_metrics[f"val_best_metrics/{name}"]
 
     def on_train_start(self):
-        # log experiment details for reproducibility
-        self.log_exp_info()
 
         self.init_hparams()
 
