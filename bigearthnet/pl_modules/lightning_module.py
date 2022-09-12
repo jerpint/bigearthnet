@@ -89,7 +89,9 @@ class LitModel(pl.LightningModule):
             y_true=all_targets, y_pred=all_preds, average="micro"
         )
         avg_loss = sum(all_loss) / len(all_loss)
-        conf_mats = multilabel_confusion_matrix(y_true=all_targets, y_pred=all_preds, labels=range(len(self.class_names)))
+        conf_mats = multilabel_confusion_matrix(
+            y_true=all_targets, y_pred=all_preds, labels=range(len(self.class_names))
+        )
         report = classification_report(
             y_true=all_targets, y_pred=all_preds, target_names=self.class_names
         )
