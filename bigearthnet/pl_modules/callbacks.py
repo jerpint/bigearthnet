@@ -1,11 +1,14 @@
 import logging
-import typing
 import os
 
 from pytorch_lightning.callbacks import Callback
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import OmegaConf, DictConfig
 
-from bigearthnet.utils.reproducibility_utils import get_exp_details
+from pip._internal.operations import freeze
+import socket
+from hydra.utils import get_original_cwd
+from bigearthnet.utils.reproducibility_utils import get_git_info
+
 
 log = logging.getLogger(__name__)
 
@@ -18,10 +21,30 @@ class ReproducibilityLogging(Callback):
     """
 
     @staticmethod
-    def log_exp_info(trainer, pl_module):
+    def parse_exp_details(cfg: DictConfig):  # pragma: no cover
+        """Will parse the experiment details to a readable format for logging.
+
+        :param cfg: (OmegaConf) The main config for the experiment.
+        """
+        # Log and save the config used for reproducibility
+        script_path = get_original_cwd()
+        git_hash, git_branch_name = get_git_info(script_path)
+        hostname = socket.gethostname()
+        dependencies = freeze.freeze()
+        dependencies_str = "\n".join([d for d in dependencies])
+        details = f"""
+                  config: {OmegaConf.to_yaml(cfg)}
+                  hostname: {hostname}
+                  git code hash: {git_hash}
+                  git branch name: {git_branch_name}
+                  dependencies: {dependencies_str}
+                  """
+        return details
+
+    def log_exp_info(self, trainer, pl_module):
         """Log info like the git branch, hash, dependencies, etc."""
         cfg = pl_module.cfg
-        exp_details = get_exp_details(cfg)
+        exp_details = self.parse_exp_details(cfg)
         log.info("Experiment info:" + exp_details + "\n")
 
         # dump the omegaconf config for reproducibility

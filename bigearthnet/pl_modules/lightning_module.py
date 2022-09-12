@@ -7,7 +7,7 @@ import pytorch_lightning as pl
 import numpy as np
 import torch
 from hydra.utils import instantiate
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 from sklearn.metrics import (
     ConfusionMatrixDisplay,
     classification_report,
