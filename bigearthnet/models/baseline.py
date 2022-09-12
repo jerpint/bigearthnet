@@ -1,5 +1,4 @@
 import logging
-import typing
 
 import torch
 import torch.nn as nn
