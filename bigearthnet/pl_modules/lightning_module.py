@@ -17,7 +17,7 @@ from torch import optim
 log = logging.getLogger(__name__)
 
 
-def _plot_conf_mats(conf_mats: typing.List, class_names: typing.List):
+def _plot_conf_mats(conf_mats: typing.List, class_names: typing.List[str]):
     """Creates a matplotlib figure with each subplot a unique confusion matrix."""
     conf_mat_fig, axs = plt.subplots(9, 5, figsize=(12, 15))
     [ax.set_axis_off() for ax in axs.ravel()]  # turn all axes off
@@ -89,7 +89,7 @@ class LitModel(pl.LightningModule):
             y_true=all_targets, y_pred=all_preds, average="micro"
         )
         avg_loss = sum(all_loss) / len(all_loss)
-        conf_mats = multilabel_confusion_matrix(y_true=all_targets, y_pred=all_preds)
+        conf_mats = multilabel_confusion_matrix(y_true=all_targets, y_pred=all_preds, labels=range(len(self.class_names)))
         report = classification_report(
             y_true=all_targets, y_pred=all_preds, target_names=self.class_names
         )
