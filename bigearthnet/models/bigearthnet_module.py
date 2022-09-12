@@ -33,7 +33,7 @@ def _plot_conf_mats(conf_mats: typing.List, class_names: typing.List[str]):
     return conf_mat_fig
 
 
-class LitModel(pl.LightningModule):
+class BigEarthNetModule(pl.LightningModule):
     """Base class for Pytorch Lightning model."""
 
     def __init__(self, cfg: DictConfig):

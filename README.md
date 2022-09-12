@@ -1,6 +1,5 @@
 # BigEarthNet
 
-
 BigEarthNet classification
 
 
@@ -48,6 +47,6 @@ Each version can be specified using the configuration files. For example, to run
 
     python train.py ++datamodule.dataset_name=bigearthnet-medium
 
-The dataset will automatically be downloaded and extracted to `datasets/` and the script will find and use the proper data.
+The dataset will automatically be downloaded and extracted to `bigearthnet/data/` and the script will find and use the proper data.
 
 
