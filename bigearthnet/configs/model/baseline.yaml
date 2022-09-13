@@ -1,4 +1,4 @@
-_target_: bigearthnet.models.baseline.Baseline
+_target_: bigearthnet.models.nets.baseline.Baseline
 num_classes: 43
 hidden_dim: 256
 model_name: baseline

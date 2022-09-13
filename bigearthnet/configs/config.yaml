@@ -1,6 +1,6 @@
 datamodule:
-  _target_: bigearthnet.data.data_loader.DataModule
-  dataset_dir: "${oc.env:HOME}/bigearthnet/bigearthnet/datasets/"
+  _target_: bigearthnet.datamodules.bigearthnet_datamodule.BigEarthNetDataModule
+  dataset_dir: "${oc.env:HOME}/bigearthnet/bigearthnet/data/"
   dataset_name: "bigearthnet-mini"
   batch_size: 16
   num_workers: 0
@@ -13,7 +13,6 @@ optimizer:
 logger:
   _target_: pytorch_lightning.loggers.TensorBoardLogger
   save_dir: "."
-  version: ${model.model_name}
 
 monitor:
   # Keeps track of this value (from validation set) 
@@ -23,8 +22,6 @@ monitor:
   patience: 10
 
 callbacks:
-  # Checkpoints last model, best model (based on value monitored)
-  # and terminates after patience epochs. 
   - _target_: pytorch_lightning.callbacks.ModelCheckpoint
     save_top_k: 1
     monitor: "step"
@@ -39,6 +36,8 @@ callbacks:
     monitor: ${monitor.name}/val
     mode:  ${monitor.mode}
     patience: ${monitor.patience}
+  - _target_: bigearthnet.utils.callbacks.ReproducibilityLogging
+  - _target_: bigearthnet.utils.callbacks.MonitorHyperParameters
 
 trainer:
   _target_: pytorch_lightning.Trainer
@@ -47,12 +46,16 @@ trainer:
   max_epochs: 3
   profiler: "pytorch"
 
+experiment:
+  group: ???
+  seed: ???
 
 hydra:
   run:
-    dir: outputs/${datamodule.dataset_name}/${now:%Y-%m-%dT%H:%M:%S}
+    dir: outputs/${datamodule.dataset_name}/${oc.select:experiment.group,default_group}/${now:%Y-%m-%dT%H:%M:%S}/${model.model_name}_lr_${optimizer.lr}_${optimizer.name}/
   sweep:
-    dir: outputs/${datamodule.dataset_name}/${now:%Y-%m-%dT%H:%M:%S}/multirun/
+    dir: outputs/${datamodule.dataset_name}/${oc.select:experiment.group,default_group}/${now:%Y-%m-%dT%H:%M:%S}/multirun/
+    subdir: ${model.model_name}_lr_${optimizer.lr}_${optimizer.name}/
   job:
     chdir: true
 

@@ -5,7 +5,7 @@ import hydra
 from hydra.utils import instantiate
 from omegaconf import DictConfig
 
-from bigearthnet.pl_modules.lightning_module import LitModel
+from bigearthnet.models.bigearthnet_module import BigEarthNetModule
 from bigearthnet.utils.reproducibility_utils import set_seed
 
 log = logging.getLogger(__name__)
@@ -16,13 +16,13 @@ def main(cfg: DictConfig):
 
     log.info("Beginning training...")
 
-    # set seed if explicitly passed
-    if cfg.get("seed"):
-        log.info(f"Setting seed to: {cfg.seed}")
-        set_seed(cfg.seed)
+    # set seed if explicitly passed through CLI
+    if cfg.experiment.get("seed"):
+        log.info(f"Setting seed to: {cfg.experiment.seed}")
+        set_seed(cfg.experiment.seed)
 
     # instantiate all objects from hydra configs
-    model = LitModel(cfg)
+    model = BigEarthNetModule(cfg)
     datamodule = instantiate(cfg.datamodule)
     trainer = instantiate(cfg.trainer)
 
