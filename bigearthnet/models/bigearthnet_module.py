@@ -7,30 +7,15 @@ import torch
 from hydra.utils import instantiate
 from omegaconf import DictConfig
 from sklearn.metrics import (
-    ConfusionMatrixDisplay,
     classification_report,
     multilabel_confusion_matrix,
     precision_recall_fscore_support,
 )
 from torch import optim
 
+from bigearthnet.utils.callbacks import _plot_conf_mats, _summarize_metrics
+
 log = logging.getLogger(__name__)
-
-
-def _plot_conf_mats(conf_mats: typing.List, class_names: typing.List[str]):
-    """Creates a matplotlib figure with each subplot a unique confusion matrix."""
-    conf_mat_fig, axs = plt.subplots(9, 5, figsize=(12, 15))
-    [ax.set_axis_off() for ax in axs.ravel()]  # turn all axes off
-    for cm, label, ax in zip(conf_mats, class_names, axs.ravel()):
-
-        # add to figure
-        disp = ConfusionMatrixDisplay(
-            confusion_matrix=cm,
-        )
-        disp.plot(ax=ax, colorbar=False)
-        ax.title.set_text(label[0:20])  # text cutoff for displaying
-
-    return conf_mat_fig
 
 
 class BigEarthNetModule(pl.LightningModule):
@@ -153,17 +138,16 @@ class BigEarthNetModule(pl.LightningModule):
 
     def log_metrics(self, metrics: typing.Dict, split: str):
         """Logs all metrics to logs and to tensorboard."""
-        conf_mats = metrics["conf_mats"]
-
         assert split in ["train", "val", "test"]
-        log.info(f"{split} epoch: {self.current_epoch}")
-        log.info(f"{split} classification report:\n{metrics['report']}")
 
-        # Parse conf. mats to plaintext to print in log
-        conf_mat_log = f"{split} Confusion matrices:\n:"
-        for cm, label in zip(conf_mats, self.class_names):
-            conf_mat_log += f"\n{label}\n{cm}\n"
-        log.info(conf_mat_log)
+        # log our metrics to the logs directly
+        metrics_summary = _summarize_metrics(
+            metrics,
+            self.class_names,
+            split,
+            self.current_epoch,
+        )
+        log.info(metrics_summary)
 
         # log metrics to tensorboard
         if split in ["train", "val"]:
@@ -173,6 +157,7 @@ class BigEarthNetModule(pl.LightningModule):
 
             # Generate the figure with confusion matrices
             # and plot it to tensorboard
+            conf_mats = metrics["conf_mats"]
             conf_mat_figure = _plot_conf_mats(conf_mats, self.class_names)
             self.logger.experiment.add_figure(
                 f"confusion matrix/{split}", conf_mat_figure, self.global_step
