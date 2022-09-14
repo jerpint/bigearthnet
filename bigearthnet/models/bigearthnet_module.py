@@ -1,4 +1,6 @@
+import json
 import logging
+import os
 import typing
 
 import matplotlib.pyplot as plt
@@ -25,8 +27,20 @@ class BigEarthNetModule(pl.LightningModule):
         super().__init__()
         self.cfg = cfg
         self.model = instantiate(cfg.model)
-        self.loss_fn = torch.nn.BCEWithLogitsLoss()
         self.save_hyperparameters(cfg, logger=False)
+        self.init_loss()
+
+    def init_loss(self):
+        """If specified in the config, the loss will be rebalanced according to data."""
+        weights_file = self.cfg.loss.get("class_weights")
+        if weights_file:
+            assert os.path.isfile(weights_file)
+            with open(weights_file, 'r') as f:
+                data = json.load(f)
+            pos_weight = torch.tensor(list(data.values()))
+        else:
+            pos_weight = None
+        self.loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
     def on_train_start(self):
         # set the class names to be accessible for later use
