@@ -18,6 +18,12 @@ DRIVE_URLS = {
     "bigearthnet-medium": "https://drive.google.com/file/d/1GiVUf7eGE0Nk-Q_1PVdqpT6M-bmrkrXH/view?usp=sharing",
 }
 
+def hub_labels_to_onehot(hub_labels, n_labels):
+    """Convert a multi-label from hub format to a onehot vector."""
+    onehot_labels = np.zeros((n_labels,), dtype=np.int16)
+    onehot_labels[hub_labels] = 1
+    return onehot_labels
+
 
 class BigEarthNetHubDataset(torch.utils.data.dataset.Dataset):
     """Dataset class used to iterate over the BigEarthNet-S2 data."""
@@ -50,9 +56,9 @@ class BigEarthNetHubDataset(torch.utils.data.dataset.Dataset):
         ]  # cast in case we're using numpy ints or something similar
         assert tuple(self.tensor_names) == ("data", "labels")
 
-        labels_idx = item["labels"].numpy()
-        onehot_labels = np.zeros((len(self.class_names),), dtype=np.int16)
-        onehot_labels[labels_idx] = 1
+
+        hub_labels = item["labels"].numpy()
+        onehot_labels = hub_labels_to_onehot(hub_labels, n_labels=len(self.class_names))
         labels = torch.tensor(onehot_labels)
 
         img_data = item["data"].numpy().astype(np.float32)
