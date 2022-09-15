@@ -1,6 +1,9 @@
 import json
 import pprint
+
 import numpy as np
+import torch
+from tqdm import tqdm
 
 
 def compute_class_counts(onehot_labels: np.ndarray) -> np.ndarray:
@@ -46,11 +49,47 @@ def save_class_weights(class_weights, class_names, output_fname):
         json.dump(json_output, f, indent=4)
 
 
+def compute_dataloader_mean_std(pt_dataloader, num_channels=3):
+    """
+    Compute the mean and std along image channels.
+
+    Takes in a pytorch dataloader, and loads the data batch by batch.
+
+    See this post for more details:
+    https://kozodoi.me/python/deep%20learning/pytorch/tutorial/2021/03/08/image-mean-std.html
+    """
+    px_sum = torch.zeros(num_channels, dtype=torch.float)
+    px_sum_sq = torch.zeros(num_channels, dtype=torch.float)
+
+    for batch in tqdm(pt_dataloader):
+        if isinstance(batch, dict):
+            # hub dataset
+            imgs = batch["data"]
+        elif isinstance(batch, list):
+            # torchvision dataset
+            imgs = batch[0]
+        else:
+            raise NotImplementedError()
+
+        px_sum += torch.sum(imgs, axis=(0, 2, 3))
+        px_sum_sq += torch.sum(imgs**2, axis=(0, 2, 3))
+
+    # compute total pixel count
+    img_count = len(pt_dataloader.dataset)
+    px_count = img_count * imgs.shape[2] * imgs.shape[3]
+
+    # mean and std
+    channel_mean = px_sum / px_count
+    channel_var = (px_sum_sq / px_count) - (channel_mean**2)
+    channel_std = np.sqrt(channel_var)
+    print(channel_std)
+
+    return channel_mean, channel_std
+
+
 if __name__ == "__main__":
     from bigearthnet.datamodules.bigearthnet_datamodule import (
-        BigEarthNetDataModule,
-        hub_labels_to_onehot,
-    )
+        BigEarthNetDataModule, hub_labels_to_onehot)
 
     dataset_dir = "../data/"  # root directory where to download the datasets
     dataset_name = "bigearthnet-medium"  # One of bigearthnet-mini, bigearthnet-medium, bigearthnet-full
@@ -67,9 +106,16 @@ if __name__ == "__main__":
         hub_labels_to_onehot(hub_label, n_classes) for hub_label in hub_labels_list
     ]
 
-    # compute counts
+    # compute class weights
     positive_counts = compute_class_counts(onehot_labels)
     class_weights = compute_class_weights(
         positive_counts, num_samples, a_min=1, a_max=100
     )
     save_class_weights(class_weights, class_names, output_fname="class_weights.json")
+
+    # Compute the channel mean and std of the dataset
+    pt_dataloader = dm.train_dataloader()
+    mean, std = compute_dataloader_mean_std(pt_dataloader)
+    # output
+    print("mean: " + str(mean))
+    print("std:  " + str(std))
