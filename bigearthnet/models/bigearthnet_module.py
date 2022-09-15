@@ -36,7 +36,7 @@ class BigEarthNetModule(pl.LightningModule):
             # If specified in the config, the loss will be rebalanced according to data.
             assert os.path.isfile(weights_file)
             log.info(f"loading {weights_file} as weights for the loss function")
-            with open(weights_file, 'r') as f:
+            with open(weights_file, "r") as f:
                 data = json.load(f)
             pos_weight = torch.tensor(list(data.values()))
         else:

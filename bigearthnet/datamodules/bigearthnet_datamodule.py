@@ -18,6 +18,7 @@ DRIVE_URLS = {
     "bigearthnet-medium": "https://drive.google.com/file/d/1GiVUf7eGE0Nk-Q_1PVdqpT6M-bmrkrXH/view?usp=sharing",
 }
 
+
 def hub_labels_to_onehot(hub_labels, n_labels):
     """Convert a multi-label from hub format to a onehot vector."""
     onehot_labels = np.zeros((n_labels,), dtype=np.int16)
@@ -55,7 +56,6 @@ class BigEarthNetHubDataset(torch.utils.data.dataset.Dataset):
             int(idx)
         ]  # cast in case we're using numpy ints or something similar
         assert tuple(self.tensor_names) == ("data", "labels")
-
 
         hub_labels = item["labels"].numpy()
         onehot_labels = hub_labels_to_onehot(hub_labels, n_labels=len(self.class_names))
