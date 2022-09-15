@@ -89,7 +89,9 @@ def compute_dataloader_mean_std(pt_dataloader, num_channels=3):
 
 if __name__ == "__main__":
     from bigearthnet.datamodules.bigearthnet_datamodule import (
-        BigEarthNetDataModule, hub_labels_to_onehot)
+        BigEarthNetDataModule,
+        hub_labels_to_onehot,
+    )
 
     dataset_dir = "../data/"  # root directory where to download the datasets
     dataset_name = "bigearthnet-medium"  # One of bigearthnet-mini, bigearthnet-medium, bigearthnet-full
