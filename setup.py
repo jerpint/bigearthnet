@@ -15,6 +15,7 @@ setup(
         "jupyter",
         "matplotlib",
         "pyyaml>=5.3",
+        "pytest",
         "pytorch_lightning==1.6.4",
         "sklearn",
         "timm",
