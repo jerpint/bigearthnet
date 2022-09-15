@@ -1,13 +1,15 @@
 export BUGGER_OFF=True
 
-python ../prepare_mini_dataset.py \
+set -e
+
+python prepare_mini_dataset.py \
 --splits-dir "$SCRATCH/bigearthnet/splits/" \
 --output-dir "$SCRATCH/bigearthnet/bigearthnet-medium/" \
 --dataset-root-dir $SCRATCH/bigearthnet/BigEarthNet-v1.0 \
 --seed 42 \
---split-samples 4000 500 500 \
+--split-samples 8000 1000 1000 \
 
-python ../data_parser.py \
+python data_parser.py \
 --root-path "$SCRATCH/bigearthnet/bigearthnet-medium/data/" \
 --splits-path "$SCRATCH/bigearthnet/bigearthnet-medium/splits/" \
 --output-hub-path "$SCRATCH/bigearthnet/bigearthnet-medium/" \
