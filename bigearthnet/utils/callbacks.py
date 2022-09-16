@@ -3,14 +3,53 @@ import os
 import socket
 import typing
 
+import matplotlib.pyplot as plt
 from hydra.utils import get_original_cwd
 from omegaconf import DictConfig, OmegaConf
 from pip._internal.operations import freeze
 from pytorch_lightning.callbacks import Callback
+from sklearn.metrics import ConfusionMatrixDisplay
 
 from bigearthnet.utils.reproducibility_utils import get_git_info
 
 log = logging.getLogger(__name__)
+
+
+def _plot_conf_mats(conf_mats: typing.List, class_names: typing.List[str]):
+    """Creates a matplotlib figure with each subplot a unique confusion matrix."""
+    conf_mat_fig, axs = plt.subplots(9, 5, figsize=(12, 15))
+    [ax.set_axis_off() for ax in axs.ravel()]  # turn all axes off
+    for cm, label, ax in zip(conf_mats, class_names, axs.ravel()):
+
+        # add to figure
+        disp = ConfusionMatrixDisplay(
+            confusion_matrix=cm,
+        )
+        disp.plot(ax=ax, colorbar=False)
+        ax.title.set_text(label[0:20])  # text cutoff for displaying
+
+    return conf_mat_fig
+
+
+def _log_conf_mats(conf_mats: typing.List, class_names: typing.List[str]):
+    """Parse confusion matrices to plaintext with class names."""
+    conf_mat_log = ""
+    for cm, label in zip(conf_mats, class_names):
+        conf_mat_log += f"\n{label}\n{cm}\n"
+    return conf_mat_log
+
+
+def _summarize_metrics(metrics, class_names, split, current_epoch=None):
+    """Summarize all metrics to a blob of plaintext."""
+    classification_report = metrics["report"]
+    conf_mats = metrics["conf_mats"]
+    conf_mat_log = _log_conf_mats(conf_mats, class_names)
+
+    return f"""
+    {split} Epoch: {current_epoch}
+    {split} Classification report:\n{classification_report}
+    {split} Confusion matrices:\n{conf_mat_log}
+    """
 
 
 class ReproducibilityLogging(Callback):
@@ -89,8 +128,15 @@ class MonitorHyperParameters(Callback):
             "val_best_metrics/f1_score": 0,
         }
 
-        # keep track of the best value in the pl_module
+        # verify that the value we want to monitor is valid
         monitor_name = pl_module.cfg.monitor.name
+        possible_monitor_names = ["loss", "precision", "recall", "f1_score"]
+        if monitor_name not in possible_monitor_names:
+            raise ValueError(
+                f"Specified monitor.name as {monitor_name}. Value to monitor must be one of {possible_monitor_names}"
+            )
+
+        # set the best value as the initial value
         pl_module.val_best_metric = init_metrics[f"val_best_metrics/{monitor_name}"]
 
         # Log the initialized values to tensorboard
@@ -106,8 +152,26 @@ class MonitorHyperParameters(Callback):
             return True
         return False
 
+    def save_best_metrics(self, trainer, pl_module):
+        class_names = pl_module.class_names
+        current_epoch = pl_module.current_epoch
+        metrics_summary = _summarize_metrics(
+            metrics=pl_module.val_metrics,
+            class_names=class_names,
+            split="val",
+            current_epoch=current_epoch,
+        )
+
+        fname = "val_best_metrics.txt"
+        output_dir = os.path.join(trainer.logger.log_dir) if trainer.logger else "."
+        with open(os.path.join(output_dir, fname), "w") as f:
+            f.write(metrics_summary)
+
     def update_best_metric(self, trainer, pl_module):
-        """Update the best scoring metric for parallel coordinate plots."""
+        """Update the best scoring metric for parallel coordinate plots
+
+        Saves a copy of the best metrics to disk for later use.
+        """
         val_metrics = pl_module.val_metrics
         mode = pl_module.cfg.monitor.mode
         name = pl_module.cfg.monitor.name
@@ -122,6 +186,9 @@ class MonitorHyperParameters(Callback):
                 },
             )
             pl_module.val_best_metric = val_metrics[name]
+
+            # save to disk
+            self.save_best_metrics(trainer, pl_module)
 
     def on_train_start(self, trainer, pl_module):
         self.init_hparams_metrics(trainer, pl_module)

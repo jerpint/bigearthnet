@@ -24,7 +24,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e .
-      - name: end_to_end
+      - name: unit_tests
+        run: pytest tests/*
+      - name: end_to_end_run
         run: |
           cd bigearthnet
           python train.py ++datamodule.dataset_dir=$GITHUB_WORKSPACE/datasets/
