@@ -36,17 +36,16 @@ def compute_class_weights(
     negative_counts = num_samples - positive_counts
     class_weights = negative_counts / positive_counts
     if any([a is not None for a in [a_min, a_max]]):
-        # only clip if a_min and/or a_max are specified
-        class_weights = np.clip(class_weights, a_min=a_min, a_max=a_max)  # clamp values
+        # only clip if either a_min or a_max are specified
+        class_weights = np.clip(class_weights, a_min=a_min, a_max=a_max)
     return class_weights
 
 
-def save_class_weights(class_weights, class_names, output_fname):
-    """Save computed class weights to a json dict."""
-    json_output = {name: weight for name, weight in zip(class_names, class_weights)}
-    pprint.pprint(json_output)
+def save_json_dict(json_dict, output_fname):
+    """Save json_dict to output_fname."""
+    pprint.pprint(json_dict)
     with open(output_fname, "w") as f:
-        json.dump(json_output, f, indent=4)
+        json.dump(json_dict, f, indent=4)
 
 
 def compute_dataloader_mean_std(pt_dataloader, num_channels=3):
@@ -58,6 +57,7 @@ def compute_dataloader_mean_std(pt_dataloader, num_channels=3):
     See this post for more details:
     https://kozodoi.me/python/deep%20learning/pytorch/tutorial/2021/03/08/image-mean-std.html
     """
+    log.info
     px_sum = torch.zeros(num_channels, dtype=torch.float)
     px_sum_sq = torch.zeros(num_channels, dtype=torch.float)
 
@@ -112,11 +112,15 @@ if __name__ == "__main__":
     class_weights = compute_class_weights(
         positive_counts, num_samples, a_min=1, a_max=100
     )
-    save_class_weights(class_weights, class_names, output_fname="class_weights.json")
+    json_dict = {name: weight for name, weight in zip(ds.class_names, class_weights)}
+    save_json_dict(json_dict, output_fname="class_weights.json")
 
     # Compute the channel mean and std of the dataset
     pt_dataloader = dm.train_dataloader()
-    mean, std = compute_dataloader_mean_std(pt_dataloader)
-    # output
-    print("mean: " + str(mean))
-    print("std:  " + str(std))
+    mean, stddev = compute_dataloader_mean_std(pt_dataloader)
+
+    json_dict = {
+        "mean": mean.tolist(),
+        "std": stddev.tolist(),
+    }
+    save_json_dict(json_dict, output_fname="mean_stddev.json")
