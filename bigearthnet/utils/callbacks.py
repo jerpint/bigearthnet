@@ -128,8 +128,15 @@ class MonitorHyperParameters(Callback):
             "val_best_metrics/f1_score": 0,
         }
 
-        # keep track of the best value in the pl_module
+        # verify that the value we want to monitor is valid
         monitor_name = pl_module.cfg.monitor.name
+        possible_monitor_names = ["loss", "precision", "recall", "f1_score"]
+        if monitor_name not in possible_monitor_names:
+            raise ValueError(
+                f"Specified monitor.name as {monitor_name}. Value to monitor must be one of {possible_monitor_names}"
+            )
+
+        # set the best value as the initial value
         pl_module.val_best_metric = init_metrics[f"val_best_metrics/{monitor_name}"]
 
         # Log the initialized values to tensorboard
