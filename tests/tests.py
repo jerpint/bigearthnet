@@ -1,5 +1,5 @@
 import numpy as np
-from bigearthnet.utils.stats import (
+from bigearthnet.data.stats import (
     compute_class_counts,
     compute_class_weights,
     compute_dataloader_mean_std,

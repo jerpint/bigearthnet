@@ -63,10 +63,10 @@ def compute_dataloader_mean_std(pt_dataloader, num_channels=3):
 
     for batch in tqdm(pt_dataloader):
         if isinstance(batch, dict):
-            # hub dataset
+            # hub dataset format
             imgs = batch["data"]
         elif isinstance(batch, list):
-            # torchvision dataset
+            # torchvision dataset format
             imgs = batch[0]
         else:
             raise NotImplementedError()
@@ -76,13 +76,12 @@ def compute_dataloader_mean_std(pt_dataloader, num_channels=3):
 
     # compute total pixel count
     img_count = len(pt_dataloader.dataset)
-    px_count = img_count * imgs.shape[2] * imgs.shape[3]
+    px_count = img_count * imgs.shape[2] * imgs.shape[3]  # num_images * H * W
 
     # mean and std
     channel_mean = px_sum / px_count
     channel_var = (px_sum_sq / px_count) - (channel_mean**2)
     channel_std = np.sqrt(channel_var)
-    print(channel_std)
 
     return channel_mean, channel_std
 
