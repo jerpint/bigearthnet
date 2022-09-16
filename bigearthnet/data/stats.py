@@ -57,7 +57,6 @@ def compute_dataloader_mean_std(pt_dataloader, num_channels=3):
     See this post for more details:
     https://kozodoi.me/python/deep%20learning/pytorch/tutorial/2021/03/08/image-mean-std.html
     """
-    log.info
     px_sum = torch.zeros(num_channels, dtype=torch.float)
     px_sum_sq = torch.zeros(num_channels, dtype=torch.float)
 
