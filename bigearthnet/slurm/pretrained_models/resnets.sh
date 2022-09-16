@@ -13,7 +13,8 @@ module --quiet load miniconda/3
 
 # 2. Load your environment
 conda activate bigearth
-DATASET=bigearthnet-full
+# DATASET=bigearthnet-full
+DATASET=bigearthnet-medium
 
 # 3. Copy your dataset on the compute node
 echo "moving dataset..."
