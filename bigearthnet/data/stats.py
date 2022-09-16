@@ -91,7 +91,7 @@ if __name__ == "__main__":
         hub_labels_to_onehot,
     )
 
-    dataset_dir = "../data/"  # root directory where to download the datasets
+    dataset_dir = "../../datasets/"  # root directory containing the datasets
     dataset_name = "bigearthnet-medium"  # One of bigearthnet-mini, bigearthnet-medium, bigearthnet-full
     batch_size = 16
 

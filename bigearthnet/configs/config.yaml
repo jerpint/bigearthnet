@@ -1,6 +1,6 @@
 datamodule:
   _target_: bigearthnet.datamodules.bigearthnet_datamodule.BigEarthNetDataModule
-  dataset_dir: "${oc.env:HOME}/bigearthnet/bigearthnet/data/" # root directory where to download the datasets
+  dataset_dir: "${oc.env:HOME}/bigearthnet/datasets/" # root directory where to download the datasets
   dataset_name: "bigearthnet-mini" # One of bigearthnet-mini, bigearthnet-medium, bigearthnet-full
   batch_size: 16
   num_workers: 0
