@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --partition=main                           # Ask for unkillable job
+#SBATCH --partition=long
 #SBATCH -o /network/scratch/p/pintojer/slurm/slurm-%j.out  # Write the log on scratch
 #SBATCH --cpus-per-task=4                                # Ask for 2 CPUs
 #SBATCH --gres=gpu:1                                     # Ask for 1 GPU
