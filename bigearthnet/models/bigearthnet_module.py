@@ -15,7 +15,7 @@ from sklearn.metrics import (
 )
 from torch import optim
 
-from bigearthnet.utils.callbacks import _plot_conf_mats, _summarize_metrics
+from bigearthnet.utils.callbacks import _summarize_metrics
 
 log = logging.getLogger(__name__)
 
@@ -169,12 +169,3 @@ class BigEarthNetModule(pl.LightningModule):
             self.log(f"precision/{split}", metrics["precision"], on_epoch=True)
             self.log(f"recall/{split}", metrics["recall"], on_epoch=True)
             self.log(f"f1_score/{split}", metrics["f1_score"], on_epoch=True)
-
-            # Generate the figure with confusion matrices
-            # and plot it to tensorboard
-            conf_mats = metrics["conf_mats"]
-            conf_mat_figure = _plot_conf_mats(conf_mats, self.class_names)
-            self.logger.experiment.add_figure(
-                f"confusion matrix/{split}", conf_mat_figure, self.global_step
-            )
-            plt.close(conf_mat_figure)
