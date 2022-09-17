@@ -172,13 +172,14 @@ class MonitorHyperParameters(Callback):
             f.write(metrics_summary)
 
         # Generate the figure with confusion matrices
-        # and plot it to tensorboard
+        # and plots it to tensorboard
         conf_mats = metrics["conf_mats"]
         fig_title = f"f1 score: {metrics['f1_score']:2.2f}\nepoch: {current_epoch}"
         conf_mat_figure = _plot_conf_mats(conf_mats, class_names, title=fig_title)
         trainer.logger.experiment.add_figure(
-            f"best_confusion_matrix/val",
-            conf_mat_figure,
+            tag=f"best_confusion_matrix/val",
+            figure=conf_mat_figure,
+            global_step=pl_module.global_step,
         )
         plt.close(conf_mat_figure)
 
