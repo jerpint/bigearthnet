@@ -15,7 +15,9 @@ from bigearthnet.utils.reproducibility_utils import get_git_info
 log = logging.getLogger(__name__)
 
 
-def _plot_conf_mats(conf_mats: typing.List, class_names: typing.List[str]):
+def _plot_conf_mats(
+    conf_mats: typing.List, class_names: typing.List[str], title: str = ""
+):
     """Creates a matplotlib figure with each subplot a unique confusion matrix."""
     conf_mat_fig, axs = plt.subplots(9, 5, figsize=(12, 15))
     [ax.set_axis_off() for ax in axs.ravel()]  # turn all axes off
@@ -27,6 +29,8 @@ def _plot_conf_mats(conf_mats: typing.List, class_names: typing.List[str]):
         )
         disp.plot(ax=ax, colorbar=False)
         ax.title.set_text(label[0:20])  # text cutoff for displaying
+
+    conf_mat_fig.suptitle(title)
 
     return conf_mat_fig
 
@@ -155,17 +159,28 @@ class MonitorHyperParameters(Callback):
     def save_best_metrics(self, trainer, pl_module):
         class_names = pl_module.class_names
         current_epoch = pl_module.current_epoch
+        metrics = pl_module.val_metrics
+
         metrics_summary = _summarize_metrics(
-            metrics=pl_module.val_metrics,
+            metrics=metrics,
             class_names=class_names,
             split="val",
             current_epoch=current_epoch,
         )
-
-        fname = "val_best_metrics.txt"
         output_dir = os.path.join(trainer.logger.log_dir) if trainer.logger else "."
-        with open(os.path.join(output_dir, fname), "w") as f:
+        with open(os.path.join(output_dir, "val_best_metrics.txt"), "w") as f:
             f.write(metrics_summary)
+
+        # Generate the figure with confusion matrices
+        # and plot it to tensorboard
+        conf_mats = metrics["conf_mats"]
+        fig_title = f"f1 score: {metrics['f1_score']:2.2f}\nepoch: {current_epoch}"
+        conf_mat_figure = _plot_conf_mats(conf_mats, class_names, title=fig_title)
+        trainer.logger.experiment.add_figure(
+            f"best_confusion_matrix/val",
+            conf_mat_figure,
+        )
+        plt.close(conf_mat_figure)
 
     def update_best_metric(self, trainer, pl_module):
         """Update the best scoring metric for parallel coordinate plots
