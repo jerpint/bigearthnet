@@ -37,7 +37,7 @@ python train.py -m \
 ++trainer.max_epochs=100 +trainer.accelerator='gpu' +trainer.devices=1 \
 ++optimizer.name="adam" ++optimizer.lr=0.0001 \
 ++experiment.group="pretrained_models" \
-model=timm ++model.model_name=resnet50,resnet_101 ++model.pretrained=true,false \
+model=timm ++model.model_name=resnet50,resnet101 ++model.pretrained=true,false \
 transforms=norm_resize \
 
 echo "All done."
