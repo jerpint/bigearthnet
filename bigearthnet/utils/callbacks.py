@@ -126,10 +126,10 @@ class MonitorHyperParameters(Callback):
     def init_hparams_metrics(self, trainer, pl_module):
         # Set up initial metrics associated to hparams before training
         init_metrics = {
-            "val_best_metrics/loss": 99999,
-            "val_best_metrics/precision": 0,
-            "val_best_metrics/recall": 0,
-            "val_best_metrics/f1_score": 0,
+            "val_best_metrics/loss": float("inf"),
+            "val_best_metrics/precision": float("-inf"),
+            "val_best_metrics/recall": float("-inf"),
+            "val_best_metrics/f1_score": float("-inf"),
         }
 
         # verify that the value we want to monitor is valid
@@ -150,9 +150,11 @@ class MonitorHyperParameters(Callback):
 
     @staticmethod
     def requires_update(metrics, mode, name, best_value):
-        if mode == "min" and metrics[name] < best_value:
+        assert mode in ["min", "max"]
+        current_value = metrics[name]
+        if mode == "min" and current_value < best_value:
             return True
-        if mode == "max" and metrics[name] > best_value:
+        if mode == "max" and current_value > best_value:
             return True
         return False
 
