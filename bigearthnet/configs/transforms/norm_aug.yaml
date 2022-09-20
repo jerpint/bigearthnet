@@ -3,13 +3,13 @@ obj:
   transforms:
     - _target_: torchvision.transforms.Normalize
       mean:
-        - 437.8417663574219 # B02
-        - 622.8858032226562 # B03
-        - 598.264404296875  # B04
+        - 439.32135009765625 # B02
+        - 623.2581176757812  # B03
+        - 599.888671875      # B04
       std:
-        - 602.388427734375  # B02
-        - 610.1756591796875 # B03
-        - 699.989013671875  # B04
+        - 606.1390380859375 # B02
+        - 612.572998046875  # B03
+        - 702.5380249023438 # B04
     - _target_: torchvision.transforms.RandomHorizontalFlip
       p: 0.5
     - _target_: torchvision.transforms.RandomVerticalFlip
