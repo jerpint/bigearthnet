@@ -126,10 +126,10 @@ class MonitorHyperParameters(Callback):
     def init_hparams_metrics(self, trainer, pl_module):
         # Set up initial metrics associated to hparams before training
         init_metrics = {
-            "val_best_metrics/loss": float('inf'),
-            "val_best_metrics/precision": float('-inf'),
-            "val_best_metrics/recall": float('-inf'),
-            "val_best_metrics/f1_score": float('-inf'),
+            "val_best_metrics/loss": float("inf"),
+            "val_best_metrics/precision": float("-inf"),
+            "val_best_metrics/recall": float("-inf"),
+            "val_best_metrics/f1_score": float("-inf"),
         }
 
         # verify that the value we want to monitor is valid
