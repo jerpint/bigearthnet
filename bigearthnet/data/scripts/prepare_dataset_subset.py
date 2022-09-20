@@ -24,7 +24,7 @@ from shutil import copytree
 import pandas as pd
 from tqdm import tqdm
 
-BASE_URL = "https://git.tu-berlin.de/rsim/BigEarthNet-S2_43-classes_models/-/raw/master/splits/"
+SPLITS_URL = "https://git.tu-berlin.de/rsim/BigEarthNet-S2_43-classes_models/-/raw/master/splits/"
 SPLITS = ["train", "val", "test"]
 
 
@@ -44,7 +44,7 @@ def download_full_splits(splits_dir: str):
         os.mkdir(splits_dir)
 
     for split in SPLITS:
-        url = BASE_URL + split + ".csv"
+        url = SPLITS_URL + split + ".csv"
         dst = str(os.path.join(splits_dir, split + ".csv"))
         if not os.path.exists(dst):
             print(f"Downloading {split}.csv to {os.path.abspath(splits_dir)}\n")
@@ -74,7 +74,7 @@ def generate_mini_dataset(dataset_root_dir, output_dir):
     print(f"Generating mini dataset in {os.path.abspath(output_dir)}...")
     output_dir = pathlib.Path(output_dir)
     mini_splits_dir = os.path.join(output_dir, "splits/")
-    mini_data_dir = os.path.join(output_dir, "data/")
+    mini_data_dir = os.path.join(output_dir, "raw_data/")
     if not os.path.isdir(mini_data_dir):
         os.makedirs(mini_data_dir)
 
@@ -105,7 +105,6 @@ if __name__ == "__main__":
         "--split-samples",
         help="Number of samples to use by split [train, valid, test], e.g. 80, 10, 10",
         nargs=3,
-        default=[80, 10, 10],
         type=int,
     )
     parser.add_argument(
