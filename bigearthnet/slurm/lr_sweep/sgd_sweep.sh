@@ -33,7 +33,7 @@ echo "beginning training..."
 
 # Try different learning rates + optimizer on baseline model
 python train.py -m \
-++datamodule.dataset_dir=$SLURM_TMPDIR ++datamodule.dataset_name=$DATASET ++datamodule.num_workers=2 ++datamodule.batch_size=256 \
+++datamodule.dataset_dir=$SLURM_TMPDIR ++datamodule.dataset_name=$DATASET ++datamodule.num_workers=4 ++datamodule.batch_size=256 \
 ++trainer.max_epochs=100 +trainer.accelerator='gpu' +trainer.devices=1 \
 ++optimizer.name="sgd" ++optimizer.lr=0.01,0.001,0.0001,0.00001 \
 ++experiment.group="lr_sweep" \

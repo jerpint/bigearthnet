@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --partition=unkillable
 #SBATCH -o /network/scratch/p/pintojer/slurm/slurm-%j.out  # Write the log on scratch
-#SBATCH --cpus-per-task=4                                # Ask for 2 CPUs
+#SBATCH --cpus-per-task=4                                # Ask for 4 CPUs
 #SBATCH --gres=gpu:1                                     # Ask for 1 GPU
-#SBATCH --mem=32G                                        # Ask for 10 GB of RAM
+#SBATCH --mem=32G                                        # Ask for 32 GB of RAM
 #SBATCH --time=24:00:00                                  # The job will run this long
 
 set -e
@@ -31,9 +31,9 @@ pip install -e .
 cd bigearthnet
 echo "beginning training..."
 
-# Try different learning rates + optimizer on baseline model
+# Try different learning rates + optimizers on baseline model
 python train.py -m \
-++datamodule.dataset_dir=$SLURM_TMPDIR ++datamodule.dataset_name=$DATASET ++datamodule.num_workers=2 ++datamodule.batch_size=256 \
+++datamodule.dataset_dir=$SLURM_TMPDIR ++datamodule.dataset_name=$DATASET ++datamodule.num_workers=4 ++datamodule.batch_size=256 \
 ++trainer.max_epochs=100 +trainer.accelerator='gpu' +trainer.devices=1 \
 ++optimizer.name="adam" ++optimizer.lr=0.01,0.001,0.0001,0.00001 \
 ++experiment.group="lr_sweep" \
