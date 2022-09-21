@@ -27,20 +27,20 @@ class Baseline(torch.nn.Module):  # pragma: no cover
         super(Baseline, self).__init__()
         self.model_name = model_name
         self.conv_layers = nn.Sequential(
-            nn.Conv2d(3, 32, 5),
+            nn.Conv2d(3, 32, 5, padding="same"),
             nn.ReLU(),
             nn.MaxPool2d(2),
-            nn.Conv2d(32, 32, 5),
+            nn.Conv2d(32, 32, 5, padding="same"),
             nn.ReLU(),
             nn.MaxPool2d(2),
-            nn.Conv2d(32, 64, 3),
+            nn.Conv2d(32, 64, 3, padding="same"),
             nn.ReLU(),
             nn.MaxPool2d(2),
         )
         self.flatten = nn.Flatten()
         self.mlp_layers = nn.Sequential(
             nn.Linear(
-                9216,
+                14400,
                 hidden_dim,
             ),  # The input size for the linear layer is determined by the previous operations
             nn.ReLU(),
