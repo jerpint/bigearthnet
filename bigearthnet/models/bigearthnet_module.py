@@ -46,7 +46,6 @@ class BigEarthNetModule(pl.LightningModule):
             pos_weight = None
         self.loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
-
     def configure_optimizers(self):
         name = self.cfg.optimizer.name
         lr = self.cfg.optimizer.lr

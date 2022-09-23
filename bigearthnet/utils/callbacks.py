@@ -171,7 +171,6 @@ class MonitorHyperParameters(Callback):
         if split == "test":
             metrics = pl_module.test_metrics
 
-
         metrics_summary = _summarize_metrics(
             metrics=metrics,
             class_names=class_names,

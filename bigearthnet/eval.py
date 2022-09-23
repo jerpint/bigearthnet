@@ -25,7 +25,7 @@ def main(cfg: DictConfig):
     datamodule.setup()
 
     # Here, cfg_path is the path to the hydra config of the experiment that was run
-    cfg_path = HydraConfig.get().get('runtime').get('config_sources')[1]['path']
+    cfg_path = HydraConfig.get().get("runtime").get("config_sources")[1]["path"]
     os.chdir(cfg_path)
 
     # Retrieve the best model (should be under checkpoints/best_model.cpkt)
