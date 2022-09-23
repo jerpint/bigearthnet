@@ -8,6 +8,7 @@ from hydra.utils import get_original_cwd
 from omegaconf import DictConfig, OmegaConf
 from pip._internal.operations import freeze
 from pytorch_lightning.callbacks import Callback
+import numpy as np
 from sklearn.metrics import ConfusionMatrixDisplay
 
 from bigearthnet.utils.reproducibility_utils import get_git_info
@@ -100,6 +101,9 @@ class ReproducibilityLogging(Callback):
     def on_train_start(self, trainer, pl_module):
         self.log_exp_info(trainer, pl_module)
 
+    def on_test_start(self, trainer, pl_module):
+        self.log_exp_info(trainer, pl_module)
+
 
 class MonitorHyperParameters(Callback):
     """Keeps track of hyper parameters in tensorboard.
@@ -158,34 +162,61 @@ class MonitorHyperParameters(Callback):
             return True
         return False
 
-    def save_best_metrics(self, trainer, pl_module):
+    def save_best_metrics(self, trainer, pl_module, split):
+        assert split in ["val", "test"]
         class_names = pl_module.class_names
-        current_epoch = pl_module.current_epoch
-        metrics = pl_module.val_metrics
+        current_epoch = pl_module.current_epoch if split == "val" else None
+        if split == "val":
+            metrics = pl_module.val_metrics
+        if split == "test":
+            metrics = pl_module.test_metrics
 
         metrics_summary = _summarize_metrics(
             metrics=metrics,
             class_names=class_names,
-            split="val",
+            split=split,
             current_epoch=current_epoch,
         )
-        output_dir = os.path.join(trainer.logger.log_dir) if trainer.logger else "."
-        with open(os.path.join(output_dir, "val_best_metrics.txt"), "w") as f:
+
+        if split == "val":
+            output_dir = os.path.join(trainer.logger.log_dir) if trainer.logger else "."
+        if split == "test":
+            output_dir = "."
+
+        # save best metrics as plaintext
+        with open(os.path.join(output_dir, f"{split}_best_metrics.txt"), "w") as f:
             f.write(metrics_summary)
 
+        # save best metrics as numpy object for easy loading
+        np.save(os.path.join(output_dir, f"{split}_best_metrics.npy"), metrics)
+
         # Generate the figure with confusion matrices
-        # and plots it to tensorboard
         conf_mats = metrics["conf_mats"]
-        fig_title = f"f1 score: {metrics['f1_score']:2.2f}\nepoch: {current_epoch}"
+        fig_title = f"""
+            split: {split}
+            f1 score: {metrics['f1_score']:2.4f}
+            precision: {metrics['precision']:2.4f}
+            recall: {metrics['recall']:2.4f}
+        """
+        if current_epoch is not None:
+            fig_title += f"epoch: {current_epoch}"
+
         conf_mat_figure = _plot_conf_mats(conf_mats, class_names, title=fig_title)
-        trainer.logger.experiment.add_figure(
-            tag=f"best_confusion_matrix/val",
-            figure=conf_mat_figure,
-            global_step=pl_module.global_step,
-        )
+
+        # save confusion matrix figures
+        fname = os.path.join(output_dir, f"{split}_conf_mats.png")
+        plt.savefig(fname)
+
+        # log figure to tensorboard on validation splits only
+        if split == "val":
+            trainer.logger.experiment.add_figure(
+                tag=f"best_confusion_matrix/{split}",
+                figure=conf_mat_figure,
+                global_step=pl_module.global_step,
+            )
         plt.close(conf_mat_figure)
 
-    def update_best_metric(self, trainer, pl_module):
+    def update_best_metric(self, trainer, pl_module, split):
         """Update the best scoring metric for parallel coordinate plots
 
         Saves a copy of the best metrics to disk for later use.
@@ -206,11 +237,14 @@ class MonitorHyperParameters(Callback):
             pl_module.val_best_metric = val_metrics[name]
 
             # save to disk
-            self.save_best_metrics(trainer, pl_module)
+            self.save_best_metrics(trainer, pl_module, split)
 
     def on_train_start(self, trainer, pl_module):
         self.init_hparams_metrics(trainer, pl_module)
 
     def on_validation_epoch_end(self, trainer, pl_module):
         if not trainer.sanity_checking:
-            self.update_best_metric(trainer, pl_module)
+            self.update_best_metric(trainer, pl_module, split="val")
+
+    def on_test_end(self, trainer, pl_module):
+        self.save_best_metrics(trainer, pl_module, split="test")
