@@ -83,14 +83,20 @@ class BigEarthNetModule(pl.LightningModule):
             all_loss.append(loss.cpu().numpy())
 
         prec, rec, f1, s = precision_recall_fscore_support(
-            y_true=all_targets, y_pred=all_preds, average="micro", zero_division=0,
+            y_true=all_targets,
+            y_pred=all_preds,
+            average="micro",
+            zero_division=0,
         )
         avg_loss = sum(all_loss) / len(all_loss)
         conf_mats = multilabel_confusion_matrix(
             y_true=all_targets, y_pred=all_preds, labels=range(len(self.class_names))
         )
         report = classification_report(
-            y_true=all_targets, y_pred=all_preds, target_names=self.class_names, zero_division=0,
+            y_true=all_targets,
+            y_pred=all_preds,
+            target_names=self.class_names,
+            zero_division=0,
         )
 
         metrics = {
