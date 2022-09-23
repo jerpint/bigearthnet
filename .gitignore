@@ -1,5 +1,7 @@
 .idea
 
+tests/MNIST
+
 lightning_logs/
 outputs*/
 datasets/bigearthnet*
