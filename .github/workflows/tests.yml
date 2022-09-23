@@ -29,4 +29,4 @@ jobs:
       - name: end_to_end_run
         run: |
           cd bigearthnet
-          python train.py ++datamodule.dataset_dir=$GITHUB_WORKSPACE/datasets/
+          python train.py ++datamodule.dataset_dir=$GITHUB_WORKSPACE/datasets/ ++dataset.class_list=$GITHUB_WORKSPACE/bigearthnet/data/class_list.json
