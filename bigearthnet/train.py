@@ -1,5 +1,4 @@
 import logging
-import pathlib
 
 import hydra
 from hydra.utils import instantiate
@@ -16,9 +15,8 @@ def main(cfg: DictConfig):
 
     log.info("Beginning training...")
 
-    # set seed if explicitly passed through CLI
+    # set seed if specified
     if cfg.experiment.get("seed"):
-        log.info(f"Setting seed to: {cfg.experiment.seed}")
         set_seed(cfg.experiment.seed)
 
     # instantiate all objects from hydra configs
