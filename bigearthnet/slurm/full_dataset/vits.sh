@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --partition=main                           # Ask for unkillable job
+#SBATCH --partition=unkillable
 #SBATCH -o /network/scratch/p/pintojer/slurm/slurm-%j.out  # Write the log on scratch
 #SBATCH --cpus-per-task=4                                # Ask for 2 CPUs
 #SBATCH --gres=gpu:1                                     # Ask for 1 GPU
@@ -31,9 +31,12 @@ echo "beginning training..."
 
 # Try different learning rates + optimizer on baseline model
 python train.py -m \
-++datamodule.dataset_dir=$SLURM_TMPDIR ++datamodule.dataset_name=$DATASET ++datamodule.num_workers=2 ++datamodule.batch_size=256 \
-++trainer.max_epochs=20 +trainer.accelerator='gpu' +trainer.devices=1 \
-++optimizer.name="sgd" ++optimizer.lr=0.01,0.001,0.0001,0.00001 \
-++experiment.group="lr_sweep" \
+++datamodule.dataset_dir=$SLURM_TMPDIR ++datamodule.dataset_name=$DATASET  \
+++datamodule.num_workers=2 ++datamodule.batch_size=256  \
+++trainer.max_epochs=100 +trainer.accelerator='gpu' +trainer.devices=1 \
+++optimizer.name="adam" ++optimizer.lr=0.0001 \
+++experiment.group="pretrained_models" \
+model=timm ++model.model_name=vit_base_patch16_224 ++model.pretrained=true \
+transforms=norm_resize \
 
 echo "All done."
