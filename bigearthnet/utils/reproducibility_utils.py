@@ -1,28 +1,18 @@
 import logging
 import os
-import random
 
-import numpy as np
-import torch
 from git import Repo
+import pytorch_lightning as pl
 
 logger = logging.getLogger(__name__)
 
 
-def set_seed(seed: int):  # pragma: no cover
-    """Set the provided seed in python/numpy/DL framework.
-
-    :param seed: (int) the seed
-    """
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+def set_seed(seed: int):
+    logger.info(f"Setting seed to: {seed}")
+    pl.utilities.seed.seed_everything(seed=seed, workers=False)
 
 
-def get_git_info(script_location):  # pragma: no cover
+def get_git_info(script_location):
     """Find the git hash for the running repository.
 
     :param script_location: (str) path to the script inside the git repos we want to find.
@@ -35,5 +25,6 @@ def get_git_info(script_location):  # pragma: no cover
     try:
         branch_name = repo.active_branch
     except TypeError:
+        # Happens on e.g. github actions
         branch_name = "detached head"
     return commit_hash, branch_name
