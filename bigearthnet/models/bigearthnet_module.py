@@ -30,6 +30,9 @@ class BigEarthNetModule(pl.LightningModule):
         self.save_hyperparameters(cfg, logger=False)
         self.init_loss()
 
+        with open(cfg.dataset.class_list, "r") as f:
+            self.class_names = json.load(f)
+
     def init_loss(self):
         weights_file = self.cfg.loss.get("class_weights")
         if weights_file:
@@ -43,11 +46,6 @@ class BigEarthNetModule(pl.LightningModule):
             pos_weight = None
         self.loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
-    def on_train_start(self):
-        # set the class names to be accessible for later use
-        self.class_names: typing.List = (
-            self.trainer.train_dataloader.dataset.datasets.class_names
-        )
 
     def configure_optimizers(self):
         name = self.cfg.optimizer.name
@@ -149,6 +147,7 @@ class BigEarthNetModule(pl.LightningModule):
 
     def test_epoch_end(self, test_step_outputs):
         metrics = self._generic_epoch_end(test_step_outputs)
+        self.test_metrics = metrics
         self.log_metrics(metrics, split="test")
 
     def log_metrics(self, metrics: typing.Dict, split: str):

@@ -1,3 +1,6 @@
+dataset:
+  class_list: "${oc.env:HOME}/bigearthnet/bigearthnet/data/class_list.json" # class_list provided in the repo
+
 datamodule:
   _target_: bigearthnet.datamodules.bigearthnet_datamodule.BigEarthNetDataModule
   dataset_dir: "${oc.env:HOME}/bigearthnet/datasets/" # root directory where to download the datasets
@@ -34,7 +37,7 @@ callbacks:
     save_top_k: 1
     monitor: ${monitor.name}/val
     mode:  ${monitor.mode}
-    filename: "best-model-{epoch:02d}-{step:02d}"
+    filename: "best-model"
   - _target_: pytorch_lightning.callbacks.EarlyStopping
     monitor: ${monitor.name}/val
     mode:  ${monitor.mode}
@@ -47,7 +50,7 @@ trainer:
   callbacks: ${callbacks}
   logger: ${logger}
   max_epochs: 3
-  profiler: "pytorch"  # Profiles GPU usage, can be viewed in tensorflow
+  profiler: "pytorch"  # Profiles GPU usage, can be viewed in tensorboard
 
 experiment:
   group: ???  # Useful to group experiments when doing hyper-parameter tuning

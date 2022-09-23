@@ -28,7 +28,7 @@ This project uses [hydra](hydra.cc) to manage configurtion files.
 To specify additonal configurations, do so simply from the command line.
 For example, to train with a [timm](https://github.com/rwightman/pytorch-image-models) resnet34 pretrained model, a learning rate of 0.001 and adam optimizer, run the following:
 
-    python train.py model=timm ++model.model_name=resnet34 ++model.pretrained=true ++config.optimizer='adam' ++config.optimizer=0.001 ++max_epochs=10
+    python train.py model=timm ++model.model_name=resnet34 ++model.pretrained=true ++config.optimizer.name='adam' ++config.optimizer.lr=0.001 ++max_epochs=10
 
 
 # Data
