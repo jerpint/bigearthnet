@@ -12,7 +12,6 @@ log = logging.getLogger(__name__)
 
 @hydra.main(config_path="configs", config_name="config", version_base="1.2")
 def main(cfg: DictConfig):
-
     log.info("Beginning training...")
 
     # set seed if specified
