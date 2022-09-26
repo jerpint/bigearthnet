@@ -3,7 +3,6 @@ import logging
 import os
 import typing
 
-import matplotlib.pyplot as plt
 import pytorch_lightning as pl
 import torch
 from hydra.utils import instantiate
