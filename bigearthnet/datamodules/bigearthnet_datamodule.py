@@ -22,8 +22,7 @@ GDRIVE_URLS = {
 
 def download_data(dataset_dir, dataset_name):
     """Download and extract the specified dataset to dataset_dir if not already present."""
-
-    assert dataset_name in GDRIVE_URLS.keys()
+    assert dataset_name in GDRIVE_URLS.keys(), "dataset_name isn't available."
     dataset_path = pathlib.Path(os.path.join(dataset_dir, dataset_name))
     tar_fname = str(dataset_path.resolve()) + ".tar"
 
@@ -111,7 +110,7 @@ class BigEarthNetHubDataset(torch.utils.data.dataset.Dataset):
         return self.dataset.summary()
 
     def visualize(self, *args, **kwargs):
-        """Forwards the call to show the dataset content (notebook-only)"""
+        """Forwards the call to show the dataset content (notebook-only)."""
         return self.dataset.visualize(*args, **kwargs)
 
     @property
@@ -170,7 +169,6 @@ class BigEarthNetDataModule(pl.LightningDataModule):
 
     def setup(self, stage=None) -> None:
         """Parses and splits all samples across the train/valid/test datasets."""
-
         self.dataset_path = download_data(self.dataset_dir, self.dataset_name)
 
         if self.train_dataset is None:

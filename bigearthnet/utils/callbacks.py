@@ -128,7 +128,12 @@ class MonitorHyperParameters(Callback):
         return hparams
 
     def init_hparams_metrics(self, trainer, pl_module):
-        # Set up initial metrics associated to hparams before training
+        """Set up initial metrics associated to hyper params before training.
+
+        Initially, all metrics are set to +/- infinity depending on if the value is to be maximized/minimized.
+        After every validation epoch, if the metric is better than the last, it is updated.
+        The metric to monitor is the same as the metric used for EarlyStopping, ModelSelection, etc.
+        """
         init_metrics = {
             "val_best_metrics/loss": float("inf"),
             "val_best_metrics/precision": float("-inf"),
@@ -154,6 +159,7 @@ class MonitorHyperParameters(Callback):
 
     @staticmethod
     def requires_update(metrics, mode, name, best_value):
+        """Returns True if a metric needs to be updated."""
         assert mode in ["min", "max"]
         current_value = metrics[name]
         if mode == "min" and current_value < best_value:
@@ -163,6 +169,15 @@ class MonitorHyperParameters(Callback):
         return False
 
     def save_best_metrics(self, trainer, pl_module, split):
+        """Saves the best metrics information to disk.
+
+        This function will produce 3 files:
+        * the best metrics in a .txt file
+        * the best metrics in a numpy object
+        * the best confusion matrices in a .png
+
+        It will also upload the .png to the tensorboard logger during validation.
+        """
         assert split in ["val", "test"]
         class_names = pl_module.class_names
         current_epoch = pl_module.current_epoch if split == "val" else None
@@ -217,14 +232,11 @@ class MonitorHyperParameters(Callback):
         plt.close(conf_mat_figure)
 
     def update_best_metric(self, trainer, pl_module, split):
-        """Update the best scoring metric for parallel coordinate plots
-
-        Saves a copy of the best metrics to disk for later use.
-        """
-        val_metrics = pl_module.val_metrics
+        """Updates the best hparams metrics after validation epoch."""
+        val_metrics = pl_module.val_metrics  # the latest combined metrics
+        best_value = pl_module.val_best_metric  # the best value (so far)
         mode = pl_module.cfg.monitor.mode
         name = pl_module.cfg.monitor.name
-        best_value = pl_module.val_best_metric
 
         if self.requires_update(val_metrics, mode, name, best_value):
             trainer.logger.log_hyperparams(
@@ -234,9 +246,9 @@ class MonitorHyperParameters(Callback):
                     for k in ["loss", "precision", "recall", "f1_score"]
                 },
             )
+            # updates to the new best metric
             pl_module.val_best_metric = val_metrics[name]
 
-            # save to disk
             self.save_best_metrics(trainer, pl_module, split)
 
     def on_train_start(self, trainer, pl_module):

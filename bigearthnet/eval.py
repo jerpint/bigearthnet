@@ -8,7 +8,6 @@ from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig
 
 from bigearthnet.models.bigearthnet_module import BigEarthNetModule
-from bigearthnet.utils.reproducibility_utils import set_seed
 
 log = logging.getLogger(__name__)
 
