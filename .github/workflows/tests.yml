@@ -29,5 +29,5 @@ jobs:
       - name: end_to_end_run
         run: |
           cd bigearthnet
-          python train.py ++datamodule.dataset_dir=$GITHUB_WORKSPACE/datasets/ ++dataset.class_list=$GITHUB_WORKSPACE/bigearthnet/data/class_list.json ++hydra.run.dir=$GITHUB_WORKSPACE/bigeathnet/outputs/test_run/
+          python train.py ++datamodule.dataset_dir=$GITHUB_WORKSPACE/datasets/ ++dataset.class_list=$GITHUB_WORKSPACE/bigearthnet/data/class_list.json ++hydra.run.dir=$GITHUB_WORKSPACE/bigearthnet/outputs/test_run/
           python eval.py --ckpt-path $GITHUB_WORKSPACE/bigearthnet/outputs/test_run/lightning_logs/version_0/checkpoints/best-model.ckpt --dataset-dir $GITHUB_WORKSPACE/datasets/ --dataset-name bigearthnet-mini
