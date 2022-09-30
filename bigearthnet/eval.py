@@ -47,10 +47,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dataset-dir",
         help="Path to where datasets are stored.",
+        default="../datasets/",
     )
     parser.add_argument(
         "--dataset-name",
         help="Path to where datasets are stored.",
+        default="bigearthnet-mini",
     )
     parser.add_argument(
         "--batch-size",
