@@ -13,7 +13,9 @@ from bigearthnet.utils.callbacks import MonitorHyperParameters
 logger = logging.getLogger(__name__)
 
 
-def main(ckpt_path, dataset_dir, dataset_name, batch_size, num_workers, accelerator, devices):
+def main(
+    ckpt_path, dataset_dir, dataset_name, batch_size, num_workers, accelerator, devices
+):
 
     logger.info("Evaluating model...")
 
@@ -65,7 +67,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--accelerator",
         help="Specify if a GPU is available.",
-        default='cpu',
+        default="cpu",
     )
     parser.add_argument(
         "--devices",
