@@ -13,7 +13,7 @@ from bigearthnet.utils.callbacks import MonitorHyperParameters
 logger = logging.getLogger(__name__)
 
 
-def main(ckpt_path, dataset_dir, dataset_name, batch_size, num_workers):
+def main(ckpt_path, dataset_dir, dataset_name, batch_size, num_workers, accelerator, devices):
 
     logger.info("Evaluating model...")
 
@@ -31,7 +31,7 @@ def main(ckpt_path, dataset_dir, dataset_name, batch_size, num_workers):
 
     # This callback will save all the best metrics to files
     callbacks = [MonitorHyperParameters()]
-    trainer = pl.Trainer(callbacks=callbacks)
+    trainer = pl.Trainer(callbacks=callbacks, accelerator=accelerator, devices=devices)
 
     # Evaluate best model on test set
     trainer.test(model=model, datamodule=datamodule)
@@ -62,6 +62,16 @@ if __name__ == "__main__":
         "--num-workers",
         default=0,
     )
+    parser.add_argument(
+        "--accelerator",
+        help="Specify if a GPU is available.",
+        default='cpu',
+    )
+    parser.add_argument(
+        "--devices",
+        default=None,
+        help="Specify how many gpus to use when avaialble (suggested to use 1)",
+    )
     args = parser.parse_args()
 
     main(
@@ -70,4 +80,6 @@ if __name__ == "__main__":
         args.dataset_name,
         args.batch_size,
         args.num_workers,
+        args.accelerator,
+        args.devices,
     )
