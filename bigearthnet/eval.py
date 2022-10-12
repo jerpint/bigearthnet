@@ -6,9 +6,7 @@ from hydra.utils import instantiate
 
 from bigearthnet.datamodules.bigearthnet_datamodule import BigEarthNetDataModule
 from bigearthnet.models.bigearthnet_module import BigEarthNetModule
-
 from bigearthnet.utils.callbacks import MonitorHyperParameters
-
 
 logger = logging.getLogger(__name__)
 

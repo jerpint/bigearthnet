@@ -4,11 +4,11 @@ import socket
 import typing
 
 import matplotlib.pyplot as plt
+import numpy as np
 from hydra.utils import get_original_cwd
 from omegaconf import DictConfig, OmegaConf
 from pip._internal.operations import freeze
 from pytorch_lightning.callbacks import Callback
-import numpy as np
 from sklearn.metrics import ConfusionMatrixDisplay
 
 from bigearthnet.utils.reproducibility_utils import get_git_info
