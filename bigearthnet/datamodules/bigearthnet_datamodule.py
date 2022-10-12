@@ -55,7 +55,7 @@ def download_data(dataset_dir, dataset_name):
 def hub_labels_to_onehot(hub_labels, n_labels):
     """Convert a multi-label from hub format to a onehot vector."""
     onehot_labels = np.zeros((n_labels,), dtype=np.int16)
-    onehot_labels[hub_labels] = 1
+    onehot_labels[[hub_labels]] = 1
     return onehot_labels
 
 
