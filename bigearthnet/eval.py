@@ -1,39 +1,87 @@
+import argparse
 import logging
-import os
-import pathlib
 
-import hydra
+import pytorch_lightning as pl
 from hydra.utils import instantiate
-from hydra.core.hydra_config import HydraConfig
-from omegaconf import DictConfig
 
+from bigearthnet.datamodules.bigearthnet_datamodule import BigEarthNetDataModule
 from bigearthnet.models.bigearthnet_module import BigEarthNetModule
 
-log = logging.getLogger(__name__)
+from bigearthnet.utils.callbacks import MonitorHyperParameters
 
 
-@hydra.main(config_name="exp_config", version_base="1.2")
-def main(cfg: DictConfig):
+logger = logging.getLogger(__name__)
 
-    log.info("Evaluating model...")
 
-    # instantiate all objects from hydra configs
-    model = BigEarthNetModule(cfg)
-    datamodule = instantiate(cfg.datamodule)
-    trainer = instantiate(cfg.trainer)
+def main(
+    ckpt_path, dataset_dir, dataset_name, batch_size, num_workers, accelerator, devices
+):
+
+    logger.info("Evaluating model...")
+
+    # Load the model from the checkpoint
+    model = BigEarthNetModule.load_from_checkpoint(ckpt_path)
+
+    # fetch the transforms used in the model
+    transforms = instantiate(model.cfg.transforms.obj)
+
+    # instantiate the datamodule
+    datamodule = BigEarthNetDataModule(
+        dataset_dir, dataset_name, batch_size, num_workers, transforms
+    )
     datamodule.setup()
 
-    # Here, cfg_path is the path to the hydra config of the experiment that was run
-    cfg_path = HydraConfig.get().get("runtime").get("config_sources")[1]["path"]
-    os.chdir(cfg_path)
-
-    # Retrieve the best model (should be under checkpoints/best_model.cpkt)
-    ckpt_path = str(list(pathlib.Path(cfg_path).rglob("best-model*.ckpt"))[0].resolve())
+    # This callback will save all the best metrics to files
+    callbacks = [MonitorHyperParameters()]
+    trainer = pl.Trainer(callbacks=callbacks, accelerator=accelerator, devices=devices)
 
     # Evaluate best model on test set
-    trainer.test(model=model, ckpt_path=ckpt_path, datamodule=datamodule)
-    log.info("Test evaluation Done.")
+    trainer.test(model=model, datamodule=datamodule)
+    logger.info("Test evaluation Done.")
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--ckpt-path",
+        help="Path to best model's checkpoint.",
+    )
+    parser.add_argument(
+        "--dataset-dir",
+        help="Path to where datasets are stored.",
+        default="../datasets/",
+    )
+    parser.add_argument(
+        "--dataset-name",
+        help="Path to where datasets are stored.",
+        default="bigearthnet-mini",
+    )
+    parser.add_argument(
+        "--batch-size",
+        default=64,
+    )
+    parser.add_argument(
+        "--num-workers",
+        default=0,
+    )
+    parser.add_argument(
+        "--accelerator",
+        help="Specify if a GPU is available.",
+        default="cpu",
+    )
+    parser.add_argument(
+        "--devices",
+        default=None,
+        help="Specify how many gpus to use when avaialble (suggested to use 1)",
+    )
+    args = parser.parse_args()
+
+    main(
+        args.ckpt_path,
+        args.dataset_dir,
+        args.dataset_name,
+        args.batch_size,
+        args.num_workers,
+        args.accelerator,
+        args.devices,
+    )
