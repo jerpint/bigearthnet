@@ -1,3 +1,4 @@
+import importlib.resources
 import json
 import logging
 import os
@@ -19,6 +20,12 @@ from bigearthnet.utils.callbacks import _summarize_metrics
 log = logging.getLogger(__name__)
 
 
+def get_class_names():
+    """Get the class names from the class_list.json file under bigearthnet/data/"""
+    with importlib.resources.open_text("bigearthnet.data", "class_list.json") as file:
+        return json.load(file)
+
+
 class BigEarthNetModule(pl.LightningModule):
     """Base class for Pytorch Lightning model."""
 
@@ -29,8 +36,7 @@ class BigEarthNetModule(pl.LightningModule):
         self.save_hyperparameters(cfg, logger=False)
         self.init_loss()
 
-        with open(cfg.dataset.class_list, "r") as f:
-            self.class_names = json.load(f)
+        self.class_names = get_class_names()
 
     def init_loss(self):
         weights_file = self.cfg.loss.get("class_weights")
