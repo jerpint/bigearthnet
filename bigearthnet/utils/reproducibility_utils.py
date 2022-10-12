@@ -1,8 +1,8 @@
 import logging
 import os
 
-from git import Repo
 import pytorch_lightning as pl
+from git import Repo
 
 logger = logging.getLogger(__name__)
 
