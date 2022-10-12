@@ -4,10 +4,27 @@ from bigearthnet.data.stats import (
     compute_class_weights,
     compute_dataloader_mean_std,
 )
+from bigearthnet.datamodules.bigearthnet_datamodule import hub_labels_to_onehot
 
 import torch
 import torchvision
 from torch.utils.data import DataLoader, Dataset
+
+
+def test_hub_labels_to_onehot():
+    n_labels = 5
+
+    hub_labels = np.array([[1], [2]])
+    onehot = hub_labels_to_onehot(hub_labels, n_labels)
+    expected_onehot = np.array([0, 1, 1, 0, 0])
+
+    assert (onehot == expected_onehot).all()
+
+    hub_labels = np.array([[0]])
+    onehot = hub_labels_to_onehot(hub_labels, n_labels)
+    expected_onehot = np.array([1, 0, 0, 0, 0])
+
+    assert (onehot == expected_onehot).all()
 
 
 def test_compute_class_counts():
