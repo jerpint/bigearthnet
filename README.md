@@ -3,8 +3,9 @@
 Welcome to the [bigearthnet](https://bigearth.net/) classification repo!  
 This project was built in the context of an [applied deep learning workshop in computer vision.](https://catalogue.ivado.umontreal.ca/Web/MyCatalog/ViewP?id=bfBsk1MpdKCuFXDwCrvZMw%3d%3d&pid=DwpGfXsYFQ5dNLAWEt9mWQ%3d%3d&mc_cid=c7c86767f2&mc_eid=3258909e75)
 This repo showcases modern tools and libraries for applied deep learning. 
-Accompanying slides and explanations can be found [here](https://docs.google.com/presentation/d/1uIAV55ZLbQafmiDmHCMeWZPEdmzWzWIm8pTKE5Z2YUw/edit?usp=sharing).
+Accompanying slides and explanations for this specific repo can be found [here](https://docs.google.com/presentation/d/1uIAV55ZLbQafmiDmHCMeWZPEdmzWzWIm8pTKE5Z2YUw/edit?usp=sharing).
 
+## Features 
 Here are a few of the features baked-in to this repo:
 
 * [Pytorch-Lightning](https://www.pytorchlightning.ai/): Implements all the training loops and boilerplate code
@@ -14,6 +15,23 @@ Here are a few of the features baked-in to this repo:
 * [Deep Lake / Activeloop Hub](https://github.com/activeloopai/deeplake): An efficient dataset/dataloader manager (think HDF5 but deep-learning centric).
 
 The focus of this repository is centered around model training and evaluation. Deployment is not considered in this project.
+
+## Additional workshop material
+
+[The workshop](https://catalogue.ivado.umontreal.ca/Web/MyCatalog/ViewP?id=bfBsk1MpdKCuFXDwCrvZMw%3d%3d&pid=DwpGfXsYFQ5dNLAWEt9mWQ%3d%3d&mc_cid=c7c86767f2&mc_eid=3258909e75) consisted of 4 virtual sessions that were presented live. You can find the accompanying slides and materials here:
+
+[Session 1](https://docs.google.com/presentation/d/1GmwXZNW3-s5mJpvVMx90bGgYtsxz7BIUIRnWUytdWyk/edit#slide=id.g142b7b5cdbf_0_26)
+
+Session 2 
+  - [Notebook (To complete)](https://colab.research.google.com/drive/1RCdPZVPGwKW7nANsKIQbgy2Jr4POnQSv)
+
+  - [Notebook (Solved)](https://colab.research.google.com/drive/1qXndrBxU3JhidUZTjEvHC134mLeHnHvA)
+
+[Session 3](https://docs.google.com/presentation/d/17ipAUyfcVSqasAFdEkVd83MuhcV-slXW3jD6VG7BIiw/edit)
+
+[Session 4](https://docs.google.com/presentation/d/1uIAV55ZLbQafmiDmHCMeWZPEdmzWzWIm8pTKE5Z2YUw/edit#slide=id.g165d21c38f9_1_744)
+
+[Additional Material on Colab](https://colab.research.google.com/drive/1eUlqozWQhBtSCoZ1dxaWwjpS8Uit0-MH#scrollTo=XcVlakGG1v76)
 
 # Getting Started
 
