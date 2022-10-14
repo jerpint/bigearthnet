@@ -46,12 +46,20 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dataset-dir",
-        help="Path to where datasets are stored.",
+        help="""
+        Path to where datasets are stored.
+        Assumes to be ../datasets by default, needs to be updated if run outside of top-level directory.
+        """,
         default="../datasets/",
     )
     parser.add_argument(
         "--dataset-name",
-        help="Path to where datasets are stored.",
+        help="""
+        Name of the dataset to use for evaluation.
+        Will load that dataset and evaluate on its test set.
+        Must be one of:
+            ["bigearthnet-mini", "bigearthnet-medium", bigearthnet-full"].
+        """,
         default="bigearthnet-mini",
     )
     parser.add_argument(
@@ -64,7 +72,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--accelerator",
-        help="Specify if a GPU is available.",
+        help="One of ['cpu', 'gpu']. Uses 'cpu' by default.",
         default="cpu",
     )
     parser.add_argument(

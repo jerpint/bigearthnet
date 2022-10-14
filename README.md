@@ -1,14 +1,19 @@
 # BigEarthNet 🌎
 
-Welcome to the  [bigearthnet](https://bigearth.net/) classification repo!  This project was built as an example project built using modern tools for applied deep leaerning in the context of an [applied deep learning course](https://catalogue.ivado.umontreal.ca/Web/MyCatalog/ViewP?id=bfBsk1MpdKCuFXDwCrvZMw%3d%3d&pid=DwpGfXsYFQ5dNLAWEt9mWQ%3d%3d&mc_cid=c7c86767f2&mc_eid=3258909e75)
+Welcome to the [bigearthnet](https://bigearth.net/) classification repo!  
+This project was built in the context of an [applied deep learning workshop in computer vision.](https://catalogue.ivado.umontreal.ca/Web/MyCatalog/ViewP?id=bfBsk1MpdKCuFXDwCrvZMw%3d%3d&pid=DwpGfXsYFQ5dNLAWEt9mWQ%3d%3d&mc_cid=c7c86767f2&mc_eid=3258909e75)
+This repo showcases modern tools and libraries for applied deep learning. 
+Accompanying slides and explanations can be found [here](https://docs.google.com/presentation/d/1uIAV55ZLbQafmiDmHCMeWZPEdmzWzWIm8pTKE5Z2YUw/edit?usp=sharing).
 
 Here are a few of the features baked-in to this repo:
 
-* Pytorch-Lightning: Implements all the training loops and boilerplate code
-* [Hydra](hydra.cc): Easily manage and configure experiment parameters
+* [Pytorch-Lightning](https://www.pytorchlightning.ai/): Implements all the training loops and boilerplate code
+* [Hydra](https://hydra.cc/): Easily manage and configure experiment parameters
 * [TIMM](https://github.com/rwightman/pytorch-image-models): A model zoo of SOTA pre-trained classification models
-* [Tensorboard](https://www.tensorflow.org/tensorboard): To track experiment progress
-* [Deep Lake / Activeloop Hub](https://github.com/activeloopai/deeplake): An efficient dataset generator.
+* [Tensorboard](https://www.tensorflow.org/tensorboard): Logger used to track experiment progress
+* [Deep Lake / Activeloop Hub](https://github.com/activeloopai/deeplake): An efficient dataset/dataloader manager (think HDF5 but deep-learning centric).
+
+The focus of this repository is centered around model training and evaluation. Deployment is not considered in this project.
 
 # Getting Started
 
@@ -37,19 +42,16 @@ To test your install, simply run:
     python train.py
 
 This will run an experiment with all the default configurations on a tiny bigearthnet subset.
-It will automatically download a small dataset, will train a shallow baseline model end-to-end for 3 epochs.
-This should run just fine on a CPU in a few minutes and will ensure everything is properly installed.
+It will automatically download a small dataset and train a shallow baseline model end-to-end for 3 epochs.
+This should run on a CPU (<1 minute) and will ensure everything is properly installed.
 
 # Dataset
+
 This project uses BigEarthNet Sentinel-2 Image Patches from [bigearthnet](https://bigearth.net/). For more in-depth information about the original dataset, you can read the [release paper](https://bigearth.net/static/documents/BigEarthNet_IGARSS_2019.pdf).
-
-
 For convenience, the raw data has already been converted into [Hub datasets](https://docs.activeloop.ai/datasets) which are provided with this repo.  In these hub datasets, we are only considering bands 2,3,4 of the original spectral data, which (roughly) correspond to the B,G and R channels.
-
 To view how the data was prepared, head to [/bigearthnet/data/scripts/](/bigearthnet/data/scripts/).
 
-3 versions of the dataset have been constructed using the BGR bands:
-
+3 versions of the dataset have been constructed using the BGR bands of the original dataset:
 
 | Name               | Size   |
 | ---                | ---    |
@@ -117,13 +119,27 @@ This repo supports hyper parameter view under `hparams` tab, evolution of confus
 
 # Model Evaluation
 
-To evaluate a model on the test set, specify the output directory of the trained model, e.g.:
+By default, all outputs can be found under the `outputs/` folder. 
+Each run will be timestamped, and contain a `checkpoints` directory with a `last-model.ckpt` and `best-model.ckpt`.
 
-    python eval.py --config-path outputs/bigearthnet-mini/default_group/2022-09-23T16:30:22/baseline_lr_0.0001_adam/lightning_logs/version_0/
+To evaluate a model on the test set, run the `eval.py` script while specifying the checkpoint of the best trained model, e.g.:
 
-This will automatically load the best model checkpoint and produce a summary of all the metrics on that dataset's test set (e.g. if it was trained on `bigearthnet-mini`, the evaluation will be on the `bigearthnet-mini` test set). Results of the evaluation will be in the same folder.
+    python eval.py --ckpt-path /path/to/best-model.ckpt
 
-You can also evaluate on other test datasets than the one that was trained on, e.g. evaluate on the medium test set even though we trained on mini:
+This will automatically load the model checkpoint and produce a summary of all the metrics on a given test set. 
+Results of the evaluation will be saved where the script was run.
+You can specify which test set to evaluate on with the `--dataset-name` flag (by default it evaluates on `bigearthnet-mini`).
+This is useful for e.g. training on `bigearthnet-medium` and evaluating on `bigearthnet-full` test set. 
 
-    python eval.py --config-path outputs/bigearthnet-mini/default_group/2022-09-23T16:30:22/baseline_lr_0.0001_adam/lightning_logs/version_0 ++datamodule.dataset_name="bigearthnet-medium"
+    python eval.py --ckpt-path /path/to/best-model.ckpt --dataset-name bigearthnet-full
 
+For additional parameters such as speciying to do the evaluation on a gpu, run:
+
+    python eval.py --help for additional parameters.
+
+# Sample Notebook
+
+You can view a sample notebook [here](https://colab.research.google.com/drive/1ijpM9RmvfUaBkfHsdgphmkdl9EY8BLSp#scrollTo=IlUOy0wEljwz).
+While this codebase is meant to be run on a dedicated machine with GPUs, you can also follow the setup in the notebook to run models from within colab. 
+
+Note that viewing results within tensorboard won't be possible from colab, but you can download the outputs/ folder locally to view them.
