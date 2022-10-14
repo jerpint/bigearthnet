@@ -116,6 +116,7 @@ Then, open a browser and head to [http://localhost:6006/](http://localhost:6006/
 
 This repo supports hyper parameter view under `hparams` tab, evolution of confusion matrices under `images` tab and profiling of the code under `pytorch profiler` tab.
 
+A tensorboard summary of the best models can be found [here](https://tensorboard.dev/experiment/2M0cvnH5S4uaikOJKYkaBw/#scalars)
 
 # Model Evaluation
 
@@ -140,6 +141,16 @@ For additional parameters such as speciying to do the evaluation on a gpu, run:
 # Sample Notebook
 
 You can view a sample notebook [here](https://colab.research.google.com/drive/1ijpM9RmvfUaBkfHsdgphmkdl9EY8BLSp#scrollTo=IlUOy0wEljwz).
-While this codebase is meant to be run on a dedicated machine with GPUs, you can also follow the setup in the notebook to run models from within colab. 
+You can also follow the setup in the notebook to run models from within colab. 
 
-Note that viewing results within tensorboard won't be possible from colab, but you can download the outputs/ folder locally to view them.
+Note that viewing results within tensorboard won't be possible from colab, but you can download the `outputs/`  folder locally to view them.
+You can also use pre-trained models from within colab.
+
+# Pretrained models
+
+A tensorboard summary of the best models can be found [here](https://tensorboard.dev/experiment/2M0cvnH5S4uaikOJKYkaBw/#scalars)
+
+You can download the pre-trained models here:
+
+Pre-trained [ConvNext](https://drive.google.com/file/d/1EyLDVoZKK-GZNnr_VEHNoH9eJoVbi2Nx/view?usp=sharing)
+Pre-trained [ViT](https://drive.google.com/file/d/1uVPSDAaDnEUDoa4fCshHXgwYORaeSLt6/view?usp=sharing)
