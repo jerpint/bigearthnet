@@ -10,10 +10,10 @@ Here are a few of the features baked-in to this repo:
 * [Pytorch-Lightning](https://www.pytorchlightning.ai/): Implements all the training loops and boilerplate code
 * [Hydra](https://hydra.cc/): Easily manage and configure experiment parameters
 * [TIMM](https://github.com/rwightman/pytorch-image-models): A model zoo of SOTA pre-trained classification models
-* [Tensorboard](https://www.tensorflow.org/tensorboard): To track experiment progress
-* [Deep Lake / Activeloop Hub](https://github.com/activeloopai/deeplake): An efficient dataset/dataloader.
+* [Tensorboard](https://www.tensorflow.org/tensorboard): Logger used to track experiment progress
+* [Deep Lake / Activeloop Hub](https://github.com/activeloopai/deeplake): An efficient dataset/dataloader manager (think HDF5 but deep-learning centric).
 
-The focus is centered around model training and evaluation.
+The focus of this repository is centered around model training and evaluation. Deployment is not considered in this project.
 
 # Getting Started
 
@@ -136,3 +136,10 @@ This is useful for e.g. training on `bigearthnet-medium` and evaluating on `bige
 For additional parameters such as speciying to do the evaluation on a gpu, run:
 
     python eval.py --help for additional parameters.
+
+# Sample Notebook
+
+You can view a sample notebook [here](https://colab.research.google.com/drive/1ijpM9RmvfUaBkfHsdgphmkdl9EY8BLSp#scrollTo=IlUOy0wEljwz).
+While this codebase is meant to be run on a dedicated machine with GPUs, you can also follow the setup in the notebook to run models from within colab. 
+
+Note that viewing results within tensorboard won't be possible from colab, but you can download the outputs/ folder locally to view them.
