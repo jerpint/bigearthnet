@@ -2,10 +2,12 @@
 
 Welcome to the [bigearthnet](https://bigearth.net/) classification repo!  
 This project was built in the context of an [applied deep learning workshop in computer vision.](https://catalogue.ivado.umontreal.ca/Web/MyCatalog/ViewP?id=bfBsk1MpdKCuFXDwCrvZMw%3d%3d&pid=DwpGfXsYFQ5dNLAWEt9mWQ%3d%3d&mc_cid=c7c86767f2&mc_eid=3258909e75)
-This repo showcases modern tools and libraries for applied deep learning. 
-Accompanying slides and explanations for this specific repo can be found [here](https://docs.google.com/presentation/d/1uIAV55ZLbQafmiDmHCMeWZPEdmzWzWIm8pTKE5Z2YUw/edit?usp=sharing).
+This repo showcases modern tools and libraries used for applied deep learning. 
+Accompanying slides and explanations can be found [here](https://docs.google.com/presentation/d/1uIAV55ZLbQafmiDmHCMeWZPEdmzWzWIm8pTKE5Z2YUw/edit?usp=sharing).
 
-## Features 
+For more details about the workshop itself (slides, content, etc.), view the [Workshop Information](#workshop-information) section
+
+# Features 
 Here are a few of the features baked-in to this repo:
 
 * [Pytorch-Lightning](https://www.pytorchlightning.ai/): Implements all the training loops and boilerplate code
@@ -16,22 +18,6 @@ Here are a few of the features baked-in to this repo:
 
 The focus of this repository is centered around model training and evaluation. Deployment is not considered in this project.
 
-## Additional workshop material
-
-[The workshop](https://catalogue.ivado.umontreal.ca/Web/MyCatalog/ViewP?id=bfBsk1MpdKCuFXDwCrvZMw%3d%3d&pid=DwpGfXsYFQ5dNLAWEt9mWQ%3d%3d&mc_cid=c7c86767f2&mc_eid=3258909e75) consisted of 4 virtual sessions that were presented live. You can find the accompanying slides and materials here:
-
-[Session 1](https://docs.google.com/presentation/d/1GmwXZNW3-s5mJpvVMx90bGgYtsxz7BIUIRnWUytdWyk/edit#slide=id.g142b7b5cdbf_0_26)
-
-Session 2 
-  - [Notebook (To complete)](https://colab.research.google.com/drive/1RCdPZVPGwKW7nANsKIQbgy2Jr4POnQSv)
-
-  - [Notebook (Solved)](https://colab.research.google.com/drive/1qXndrBxU3JhidUZTjEvHC134mLeHnHvA)
-
-[Session 3](https://docs.google.com/presentation/d/17ipAUyfcVSqasAFdEkVd83MuhcV-slXW3jD6VG7BIiw/edit)
-
-[Session 4](https://docs.google.com/presentation/d/1uIAV55ZLbQafmiDmHCMeWZPEdmzWzWIm8pTKE5Z2YUw/edit#slide=id.g165d21c38f9_1_744)
-
-[Additional Material on Colab](https://colab.research.google.com/drive/1eUlqozWQhBtSCoZ1dxaWwjpS8Uit0-MH#scrollTo=XcVlakGG1v76)
 
 # Getting Started
 
@@ -172,3 +158,74 @@ You can download the pre-trained models here:
 
 Pre-trained [ConvNext](https://drive.google.com/file/d/1EyLDVoZKK-GZNnr_VEHNoH9eJoVbi2Nx/view?usp=sharing)
 Pre-trained [ViT](https://drive.google.com/file/d/1uVPSDAaDnEUDoa4fCshHXgwYORaeSLt6/view?usp=sharing)
+
+# Workshop Information
+
+[The workshop](https://catalogue.ivado.umontreal.ca/Web/MyCatalog/ViewP?id=bfBsk1MpdKCuFXDwCrvZMw%3d%3d&pid=DwpGfXsYFQ5dNLAWEt9mWQ%3d%3d&mc_cid=c7c86767f2&mc_eid=3258909e75) consists of 4 virtual sessions, that were presented live. 
+You can find the accompanying slides and materials here:
+
+### Session 1 - Introduction to image classification - theory
+Tuesday, October 4, 2022
+Duration: 2 hours
+
+[link to slides](https://docs.google.com/presentation/d/1GmwXZNW3-s5mJpvVMx90bGgYtsxz7BIUIRnWUytdWyk/edit#slide=id.g142b7b5cdbf_0_26) 
+
+[link to pdf](presentations/session_1.pdf)
+
+[Additional Material on Colab](https://colab.research.google.com/drive/1eUlqozWQhBtSCoZ1dxaWwjpS8Uit0-MH#scrollTo=XcVlakGG1v76)
+
+Content:
+- Review what images are and how computers interpret them (grayscale vs. RGB images)
+- Review of concepts behind image classification in a supervised learning setting
+- Common neural network architectures and their underlying operations (Multilayer perceptrons, Convolutional neural networks)
+- Gradient descent intuitions and the role of the learning rate and optimizer
+- How to evaluate models, performance metrics, confusion matrices, precision, recall, etc.
+- Data Augmentation
+
+### Session 2 -  Introduction to image classification - practical
+Friday, October 7, 2022
+Duration: 2 hours
+
+[Link to notebook (To complete)](https://colab.research.google.com/drive/1RCdPZVPGwKW7nANsKIQbgy2Jr4POnQSv)
+
+[Link to notebook (Solved)](https://colab.research.google.com/drive/1qXndrBxU3JhidUZTjEvHC134mLeHnHvA)
+
+Content: 
+
+This will be a hands-on, live-coding session.
+The task will be to implement a rock, paper, scissors game using pytorch.
+Simple models will be implemented and trained from scratch (e.g. MLP, LeNet).
+Training loops and evaluation routines will be implemented.
+Data splits will be considered, as well as concepts behind data augmentation and data distribution shifts.
+
+
+### Session 3 - DL Model Architectures - theory
+Tuesday, October 11, 2022
+Duration: 2 hours
+
+[link to slides](https://docs.google.com/presentation/d/17ipAUyfcVSqasAFdEkVd83MuhcV-slXW3jD6VG7BIiw/edit)
+
+[link to pdf](presentations/session_3.pdf)
+
+Content:
+- Overview of the evolution of state-of-the-art models on the ImageNet benchmark (VGG, ResNet)
+- Introduction to self-attention, transformers and vision transformers (ViT)
+- Comparisons (pros, cons, differences) between CNNs and ViT (Tradeoffs, benchmarks, speed, inference, model size etc.)
+- Foundation models + zero shot learning (CLIP)
+- Introduction to object detection and image segmentation
+
+
+### Session 4 - Implementation of a DL project - practical
+Duration: 2 hours
+Friday, October 14, 2022
+
+[Link to slides](https://docs.google.com/presentation/d/1uIAV55ZLbQafmiDmHCMeWZPEdmzWzWIm8pTKE5Z2YUw/edit#slide=id.g165d21c38f9_1_744)
+
+[link to pdf](presentations/session_4.pdf)
+
+[link to notebook](notebooks/bigearthnet_demo.ipynb)
+
+Summary: In this session, we will be implementing a remote-sensing task on the bigearthnet dataset (multi-label classification).
+We will implement a baseline and compare it to state-of-the-art models (both pre-trained and fine-tuned models).
+Concepts of fine-tuning pretrained models and hyper parameter tuning will be explained and implemented.
+We will focus on what goes into implementing a codebase for larger models/datasets as well as best practices surrounding the experiments - debugging, monitoring results, testing, reporting, checkpointing etc.
