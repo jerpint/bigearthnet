@@ -33,7 +33,7 @@ class BigEarthNetModule(pl.LightningModule):
         super().__init__()
         self.cfg = cfg
         self.model = instantiate(cfg.model)
-        self.save_hyperparameters(cfg, logger=False)
+        self.save_hyperparameters(cfg)
         self.init_loss()
 
         self.class_names = get_class_names()
@@ -117,8 +117,9 @@ class BigEarthNetModule(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         """Runs a prediction step for training, returning the loss."""
         outputs = self._generic_step(batch, batch_idx)
+        prefix = self.cfg.logger.train_metric_prefix
         self.log(
-            "loss/train",
+            f"{prefix}loss",
             outputs["loss"],
             on_step=True,
             on_epoch=True,
@@ -134,8 +135,9 @@ class BigEarthNetModule(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         """Runs a prediction step for validation, logging the loss."""
         outputs = self._generic_step(batch, batch_idx)
+        prefix = self.cfg.logger.val_metric_prefix
         self.log(
-            "loss/val",
+            f"{prefix}loss",
             outputs["loss"],
             on_step=True,
             on_epoch=True,
@@ -173,8 +175,15 @@ class BigEarthNetModule(pl.LightningModule):
         )
         log.info(metrics_summary)
 
+        if split == "test":
+            return
+
+        prefix = (
+            self.cfg.logger.train_metric_prefix
+            if split == "train"
+            else self.cfg.logger.val_metric_prefix
+        )
         # log metrics to tensorboard
-        if split in ["train", "val"]:
-            self.log(f"precision/{split}", metrics["precision"], on_epoch=True)
-            self.log(f"recall/{split}", metrics["recall"], on_epoch=True)
-            self.log(f"f1_score/{split}", metrics["f1_score"], on_epoch=True)
+        self.log(f"{prefix}precision", metrics["precision"], on_epoch=True)
+        self.log(f"{prefix}recall", metrics["recall"], on_epoch=True)
+        self.log(f"{prefix}f1_score", metrics["f1_score"], on_epoch=True)

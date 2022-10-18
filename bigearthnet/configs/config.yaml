@@ -12,8 +12,11 @@ optimizer:
 
 logger:
   # This project uses tensorboard as a logger.
-  _target_: pytorch_lightning.loggers.TensorBoardLogger
-  save_dir: "." # actual save_dir will be set by hydra
+  _target_: aim.pytorch_lightning.AimLogger
+  repo: "${oc.env:HOME}/bigearthnet/bigearthnet/outputs/.aim" # where to gather aim runs
+  experiment: ${experiment.group}
+  train_metric_prefix: 'train_'
+  val_metric_prefix: 'val_'
 
 loss:
   class_weights: null # specify a path to the class_weights.json file if you want to re-balance the loss. 
@@ -32,15 +35,15 @@ callbacks:
     filename: "last-model"
   - _target_: pytorch_lightning.callbacks.ModelCheckpoint # checkpoints the best model according to val metric
     save_top_k: 1
-    monitor: ${monitor.name}/val
+    monitor: ${logger.val_metric_prefix}${monitor.name} # e.g. val_f1_score
     mode:  ${monitor.mode}
     filename: "best-model"
   - _target_: pytorch_lightning.callbacks.EarlyStopping # stops training after N epochs if val metric hasn't improved
-    monitor: ${monitor.name}/val
+    monitor: ${logger.val_metric_prefix}${monitor.name} # e.g. val_f1_score
     mode:  ${monitor.mode}
     patience: ${monitor.patience}
   - _target_: bigearthnet.utils.callbacks.ReproducibilityLogging # logs useful system info
-  - _target_: bigearthnet.utils.callbacks.MonitorHyperParameters # monitors hyper parameters for tensorboard
+  - _target_: bigearthnet.utils.callbacks.MonitorBestValues # monitors hyper parameters for tensorboard
 
 trainer:
   _target_: pytorch_lightning.Trainer
@@ -50,15 +53,15 @@ trainer:
   profiler: "pytorch"  # Profiles GPU usage, can be viewed in tensorboard
 
 experiment:
-  group: ???  # Useful to group experiments when doing hyper-parameter tuning
+  group: "default_group"  # Useful to group experiments when doing hyper-parameter tuning
   seed: ???  # Set for reproducible experiments
 
 hydra:
   run:
     # Specifies where to store all training aretefacts (model checkpoints, logs, results, etc.)
-    dir: outputs/${datamodule.dataset_name}/${oc.select:experiment.group,default_group}/${now:%Y-%m-%dT%H:%M:%S}/${model.model_name}_lr_${optimizer.lr}_${optimizer.name}/
+    dir: outputs/${datamodule.dataset_name}/${experiment.group}/${now:%Y-%m-%dT%H:%M:%S}/${model.model_name}_lr_${optimizer.lr}_${optimizer.name}/
   sweep:
-    dir: outputs/${datamodule.dataset_name}/${oc.select:experiment.group,default_group}/${now:%Y-%m-%dT%H:%M:%S}/multirun/
+    dir: outputs/${datamodule.dataset_name}/${experiment.group}/${now:%Y-%m-%dT%H:%M:%S}/multirun/
     subdir: ${model.model_name}_lr_${optimizer.lr}_${optimizer.name}/
   job:
     chdir: true
