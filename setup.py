@@ -14,6 +14,7 @@ setup(
         "jupyter",
         "matplotlib",
         "numpy>=1.23",
+        "orion",
         "pyyaml>=5.3",
         "pytest",
         "pytorch_lightning==1.6.4",
