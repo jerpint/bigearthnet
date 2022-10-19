@@ -1,12 +1,11 @@
 .idea
 
+tests/MNIST
+
 lightning_logs/
 outputs*/
-datasets/
+datasets/bigearthnet*
 .DS_Store
-
-bigearthnet/data/bigearthnet-mini/
-bigearthnet/data/bigearthnet-medium/
 
 *.tar
 

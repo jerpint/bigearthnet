@@ -13,10 +13,50 @@ import torch.utils.data.dataset
 
 logger = logging.getLogger(__name__)
 
-DRIVE_URLS = {
-    "bigearthnet-mini": "https://drive.google.com/file/d/16ExAp-dqDvfvZ1KU6R_6k4Xjb-hhcHTN/view?usp=sharing",
-    "bigearthnet-medium": "https://drive.google.com/file/d/1GiVUf7eGE0Nk-Q_1PVdqpT6M-bmrkrXH/view?usp=sharing",
+GDRIVE_URLS = {
+    "bigearthnet-mini": "https://drive.google.com/file/d/1X2-NpZ4ExUooAi8tkCBWAlmHZAG_N3Ux/view?usp=sharing",
+    "bigearthnet-medium": "https://drive.google.com/file/d/1YW4ugRQTl-YF_ZpLO7gIRSlHnB2Cwslz/view?usp=sharing",
+    "bigearthnet-full": "https://drive.google.com/file/d/1isUcPQvCn1xc5GWEmPDOqj_l24QH2ZtA/view?usp=sharing",
 }
+
+
+def download_data(dataset_dir, dataset_name):
+    """Download and extract the specified dataset to dataset_dir if not already present."""
+    assert dataset_name in GDRIVE_URLS.keys(), "dataset_name isn't available."
+    dataset_path = pathlib.Path(os.path.join(dataset_dir, dataset_name))
+    tar_fname = str(dataset_path.resolve()) + ".tar"
+
+    # Skip download if dataset was already extracted
+    if os.path.isdir(dataset_path):
+        logger.info(f"Dataset already present at {dataset_path}, skipping download.")
+        return dataset_path
+
+    # Create dataset dir if it doesn't already exist
+    if not os.path.isdir(dataset_dir):
+        os.mkdir(dataset_dir)
+
+    # download the dataset from google drive
+    if not os.path.isfile(tar_fname):
+        logger.info(f"Downloading {dataset_name} dataset to {tar_fname}")
+        url = GDRIVE_URLS[dataset_name]
+        gdown.download(url, str(tar_fname), fuzzy=True)
+
+    # extract tar file
+    with tarfile.open(str(tar_fname), "r") as tar:
+        tar.extractall(path=str(dataset_dir), members=tar)
+
+    logger.info(
+        f"Succesfully downloaded and extracted {dataset_name} to {dataset_path}"
+    )
+
+    return dataset_path
+
+
+def hub_labels_to_onehot(hub_labels, n_labels):
+    """Convert a multi-label from hub format to a onehot vector."""
+    onehot_labels = np.zeros((n_labels,), dtype=np.int16)
+    onehot_labels[[hub_labels]] = 1
+    return onehot_labels
 
 
 class BigEarthNetHubDataset(torch.utils.data.dataset.Dataset):
@@ -50,9 +90,8 @@ class BigEarthNetHubDataset(torch.utils.data.dataset.Dataset):
         ]  # cast in case we're using numpy ints or something similar
         assert tuple(self.tensor_names) == ("data", "labels")
 
-        labels_idx = item["labels"].numpy()
-        onehot_labels = np.zeros((len(self.class_names),), dtype=np.int16)
-        onehot_labels[labels_idx] = 1
+        hub_labels = item["labels"].numpy()
+        onehot_labels = hub_labels_to_onehot(hub_labels, n_labels=len(self.class_names))
         labels = torch.tensor(onehot_labels)
 
         img_data = item["data"].numpy().astype(np.float32)
@@ -71,7 +110,7 @@ class BigEarthNetHubDataset(torch.utils.data.dataset.Dataset):
         return self.dataset.summary()
 
     def visualize(self, *args, **kwargs):
-        """Forwards the call to show the dataset content (notebook-only)"""
+        """Forwards the call to show the dataset content (notebook-only)."""
         return self.dataset.visualize(*args, **kwargs)
 
     @property
@@ -123,49 +162,15 @@ class BigEarthNetDataModule(pl.LightningDataModule):
         super().__init__()
         self.dataset_name = dataset_name
         self.dataset_dir = pathlib.Path(dataset_dir)
-        self.dataset_path = pathlib.Path(os.path.join(dataset_dir, dataset_name))
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.train_dataset, self.valid_dataset, self.test_dataset = None, None, None
         self.transforms = transforms
 
-        self.download_data()
-
-    def download_data(self):
-        """Downloads/extracts/unpacks the data if needed."""
-        if os.path.isdir(self.dataset_path):
-            logger.info(
-                f"Dataset already present at {self.dataset_path}, skipping download."
-            )
-            return
-
-        if not os.path.isdir(self.dataset_dir):
-            os.mkdir(self.dataset_dir)
-        logger.info(
-            f"Downloading {self.dataset_name} dataset to {str(self.dataset_dir.resolve())}"
-        )
-
-        # download from gdrive
-        url = DRIVE_URLS[self.dataset_name]
-        tar_output = pathlib.Path(
-            os.path.join(self.dataset_dir, self.dataset_name + ".tar")
-        )
-        gdown.download(url, str(tar_output), fuzzy=True)
-
-        # extract tar
-        try:
-            with tarfile.open(str(tar_output), "r") as tar:
-                tar.extractall(path=str(self.dataset_dir), members=tar)
-            os.remove(tar_output)
-        except tarfile.ExtractError:
-            logger.info("tar extraction failed.")
-
-        logger.info(
-            f"Succesfully downloaded and extracted {self.dataset_name} to {self.dataset_path}."
-        )
-
     def setup(self, stage=None) -> None:
         """Parses and splits all samples across the train/valid/test datasets."""
+        self.dataset_path = download_data(self.dataset_dir, self.dataset_name)
+
         if self.train_dataset is None:
             self.train_dataset = BigEarthNetHubDataset(
                 self.dataset_path / "train",

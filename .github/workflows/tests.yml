@@ -24,7 +24,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e .
-      - name: end_to_end
+      - name: unit_tests
+        run: pytest tests/*
+      - name: end_to_end_run
         run: |
           cd bigearthnet
-          python train.py ++datamodule.dataset_dir=$GITHUB_WORKSPACE/datasets/
+          python train.py ++datamodule.dataset_dir=$GITHUB_WORKSPACE/datasets/  ++hydra.run.dir=$GITHUB_WORKSPACE/bigearthnet/outputs/test_run/
+          python eval.py --ckpt-path $GITHUB_WORKSPACE/bigearthnet/outputs/test_run/lightning_logs/version_0/checkpoints/best-model.ckpt --dataset-dir $GITHUB_WORKSPACE/datasets/ --dataset-name bigearthnet-mini

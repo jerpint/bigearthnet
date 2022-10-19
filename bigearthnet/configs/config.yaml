@@ -1,57 +1,61 @@
 datamodule:
   _target_: bigearthnet.datamodules.bigearthnet_datamodule.BigEarthNetDataModule
-  dataset_dir: "${oc.env:HOME}/bigearthnet/bigearthnet/data/"
-  dataset_name: "bigearthnet-mini"
-  batch_size: 16
-  num_workers: 0
+  dataset_dir: "${oc.env:HOME}/bigearthnet/datasets/" # root directory where to download the datasets, overwrite via hydra to change
+  dataset_name: "bigearthnet-mini" # One of bigearthnet-mini, bigearthnet-medium, bigearthnet-full
+  batch_size: 16 # Number of elements in a batch
+  num_workers: 0 # 0 is great for debugging, set it to higher if your machine has many CPUs
   transforms: ${transforms.obj}
 
 optimizer:
   name: 'adam'  # adam or sgd
-  lr: 0.0001
+  lr: 0.0001  # learning rate
 
 logger:
+  # This project uses tensorboard as a logger.
   _target_: pytorch_lightning.loggers.TensorBoardLogger
-  save_dir: "."
+  save_dir: "." # actual save_dir will be set by hydra
+
+loss:
+  class_weights: null # specify a path to the class_weights.json file if you want to re-balance the loss. 
 
 monitor:
-  # Keeps track of this value (from validation set) 
-  # to determine when to do model selection, patience, etc. 
-  name: "loss"
-  mode: "min"
+  # Keeps track of this value to determine when to do model selection, patience, etc. 
+  name: "f1_score" # loss, f1_score, precision, recall
+  mode: "max"  # min or max depending on metric, e.g. loss is min, f1_score is max
   patience: 10
 
 callbacks:
-  - _target_: pytorch_lightning.callbacks.ModelCheckpoint
+  - _target_: pytorch_lightning.callbacks.ModelCheckpoint # checkpoints the last model
     save_top_k: 1
     monitor: "step"
     mode: "max"
     filename: "last-model"
-  - _target_: pytorch_lightning.callbacks.ModelCheckpoint
+  - _target_: pytorch_lightning.callbacks.ModelCheckpoint # checkpoints the best model according to val metric
     save_top_k: 1
     monitor: ${monitor.name}/val
     mode:  ${monitor.mode}
-    filename: "best-model-{epoch:02d}-{step:02d}"
-  - _target_: pytorch_lightning.callbacks.EarlyStopping
+    filename: "best-model"
+  - _target_: pytorch_lightning.callbacks.EarlyStopping # stops training after N epochs if val metric hasn't improved
     monitor: ${monitor.name}/val
     mode:  ${monitor.mode}
     patience: ${monitor.patience}
-  - _target_: bigearthnet.utils.callbacks.ReproducibilityLogging
-  - _target_: bigearthnet.utils.callbacks.MonitorHyperParameters
+  - _target_: bigearthnet.utils.callbacks.ReproducibilityLogging # logs useful system info
+  - _target_: bigearthnet.utils.callbacks.MonitorHyperParameters # monitors hyper parameters for tensorboard
 
 trainer:
   _target_: pytorch_lightning.Trainer
   callbacks: ${callbacks}
   logger: ${logger}
   max_epochs: 3
-  profiler: "pytorch"
+  profiler: "pytorch"  # Profiles GPU usage, can be viewed in tensorboard
 
 experiment:
-  group: ???
-  seed: ???
+  group: ???  # Useful to group experiments when doing hyper-parameter tuning
+  seed: ???  # Set for reproducible experiments
 
 hydra:
   run:
+    # Specifies where to store all training aretefacts (model checkpoints, logs, results, etc.)
     dir: outputs/${datamodule.dataset_name}/${oc.select:experiment.group,default_group}/${now:%Y-%m-%dT%H:%M:%S}/${model.model_name}_lr_${optimizer.lr}_${optimizer.name}/
   sweep:
     dir: outputs/${datamodule.dataset_name}/${oc.select:experiment.group,default_group}/${now:%Y-%m-%dT%H:%M:%S}/multirun/
@@ -61,6 +65,6 @@ hydra:
 
 defaults:
   - _self_
-  - model: baseline.yaml
-  - transforms: norm.yaml
   - override hydra/sweeper: orion
+  - model: baseline.yaml # uses the default baseline model when training
+  - transforms: norm.yaml # performs normalization as default transform
