@@ -7,7 +7,6 @@ import json
 import logging
 import os
 import pathlib
-import pickle
 import pprint
 import re
 import typing
@@ -18,7 +17,7 @@ import numpy as np
 import pandas as pd
 import tqdm
 
-from bigearthnet.data.prepare_mini_dataset import download_full_splits
+from bigearthnet.data.scripts.prepare_dataset_subset import download_full_splits
 
 logger = logging.getLogger(__name__)
 

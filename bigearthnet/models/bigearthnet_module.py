@@ -1,9 +1,9 @@
+import importlib.resources
 import json
 import logging
 import os
 import typing
 
-import matplotlib.pyplot as plt
 import pytorch_lightning as pl
 import torch
 from hydra.utils import instantiate
@@ -15,9 +15,15 @@ from sklearn.metrics import (
 )
 from torch import optim
 
-from bigearthnet.utils.callbacks import _plot_conf_mats, _summarize_metrics
+from bigearthnet.utils.callbacks import _summarize_metrics
 
 log = logging.getLogger(__name__)
+
+
+def get_class_names():
+    """Get the class names from the class_list.json file under bigearthnet/data/"""
+    with importlib.resources.open_text("bigearthnet.data", "class_list.json") as file:
+        return json.load(file)
 
 
 class BigEarthNetModule(pl.LightningModule):
@@ -29,6 +35,8 @@ class BigEarthNetModule(pl.LightningModule):
         self.model = instantiate(cfg.model)
         self.save_hyperparameters(cfg, logger=False)
         self.init_loss()
+
+        self.class_names = get_class_names()
 
     def init_loss(self):
         weights_file = self.cfg.loss.get("class_weights")
@@ -42,12 +50,6 @@ class BigEarthNetModule(pl.LightningModule):
         else:
             pos_weight = None
         self.loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
-
-    def on_train_start(self):
-        # set the class names to be accessible for later use
-        self.class_names: typing.List = (
-            self.trainer.train_dataloader.dataset.datasets.class_names
-        )
 
     def configure_optimizers(self):
         name = self.cfg.optimizer.name
@@ -86,14 +88,20 @@ class BigEarthNetModule(pl.LightningModule):
             all_loss.append(loss.cpu().numpy())
 
         prec, rec, f1, s = precision_recall_fscore_support(
-            y_true=all_targets, y_pred=all_preds, average="micro"
+            y_true=all_targets,
+            y_pred=all_preds,
+            average="micro",
+            zero_division=0,
         )
         avg_loss = sum(all_loss) / len(all_loss)
         conf_mats = multilabel_confusion_matrix(
             y_true=all_targets, y_pred=all_preds, labels=range(len(self.class_names))
         )
         report = classification_report(
-            y_true=all_targets, y_pred=all_preds, target_names=self.class_names
+            y_true=all_targets,
+            y_pred=all_preds,
+            target_names=self.class_names,
+            zero_division=0,
         )
 
         metrics = {
@@ -149,6 +157,7 @@ class BigEarthNetModule(pl.LightningModule):
 
     def test_epoch_end(self, test_step_outputs):
         metrics = self._generic_epoch_end(test_step_outputs)
+        self.test_metrics = metrics
         self.log_metrics(metrics, split="test")
 
     def log_metrics(self, metrics: typing.Dict, split: str):
@@ -169,12 +178,3 @@ class BigEarthNetModule(pl.LightningModule):
             self.log(f"precision/{split}", metrics["precision"], on_epoch=True)
             self.log(f"recall/{split}", metrics["recall"], on_epoch=True)
             self.log(f"f1_score/{split}", metrics["f1_score"], on_epoch=True)
-
-            # Generate the figure with confusion matrices
-            # and plot it to tensorboard
-            conf_mats = metrics["conf_mats"]
-            conf_mat_figure = _plot_conf_mats(conf_mats, self.class_names)
-            self.logger.experiment.add_figure(
-                f"confusion matrix/{split}", conf_mat_figure, self.global_step
-            )
-            plt.close(conf_mat_figure)
