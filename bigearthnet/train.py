@@ -29,6 +29,8 @@ def main(cfg: DictConfig):
     trainer.fit(model, datamodule=datamodule)
     log.info("Training Done.")
 
+    return model.val_best_metric
+
 
 if __name__ == "__main__":
     main()
