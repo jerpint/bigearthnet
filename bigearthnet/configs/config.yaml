@@ -67,3 +67,4 @@ defaults:
   - _self_
   - model: baseline.yaml # uses the default baseline model when training
   - transforms: norm.yaml # performs normalization as default transform
+  - override hydra/sweeper: orion

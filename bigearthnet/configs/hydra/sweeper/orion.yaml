@@ -1,0 +1,28 @@
+orion:
+  name: 'experiment'
+  version: '1'
+
+algorithm:
+  type: random
+  config:
+    seed: 1
+
+worker:
+  n_workers: -1
+  max_broken: 3
+  max_trials: 3
+
+storage:
+  type: legacy
+
+  database:
+    type: pickleddb
+    host: 'database.pkl'
+
+# parametrization of the hyperparameter space
+parametrization:
+  datamodule:
+    batch_size: "choices([64, 128, 256])"
+  optimizer:
+    lr: "uniform(0, 1)"
+    name: "choices(['adam', 'sgd'])"
