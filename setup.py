@@ -15,6 +15,7 @@ setup(
         "matplotlib",
         "numpy>=1.23",
         "orion",
+        "hydra-orion-sweeper",
         "pyyaml>=5.3",
         "pytest",
         "pytorch_lightning==1.6.4",
